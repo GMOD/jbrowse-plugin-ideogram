@@ -3,7 +3,7 @@ import { observer } from 'mobx-react'
 import Ideogram from 'ideogram'
 import ImportForm from './ImportForm'
 import { allChromosomes, tierLegend } from './util'
-import { Grid } from '@material-ui/core'
+import { Grid, Typography, Link } from '@material-ui/core'
 import { getSession } from '@jbrowse/core/util'
 
 let iter = 0
@@ -90,6 +90,13 @@ const IdeogramView = observer(({ model }: { model: any }) => {
       {!model.showImportForm && model.orientation === 'vertical' ? (
         <div ref={ref} id={identifier} style={{ paddingTop: '5px' }}></div>
       ) : null}
+      <Typography
+        variant="caption"
+        style={{ paddingLeft: '4px', paddingBottom: '4px' }}
+      >
+        Powered by{' '}
+        <Link href="https://eweitz.github.io/ideogram/">ideogram.js</Link>.
+      </Typography>
     </div>
   )
 })
