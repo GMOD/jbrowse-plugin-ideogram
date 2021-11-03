@@ -64,7 +64,7 @@ function ExternalLinks(props: any) {
           <TableBody>
             {externalLinkArray.map((externalLink: string, key: string) => (
               <ExternalLink
-                id={feature.geneSymbol}
+                id={feature.geneSymbol ? feature.geneSymbol : feature.name}
                 {...externalLink}
                 key={key}
               />

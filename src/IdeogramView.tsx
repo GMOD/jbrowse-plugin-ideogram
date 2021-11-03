@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo } from 'react'
 import { observer } from 'mobx-react'
 import Ideogram from 'ideogram'
 import ImportForm from './ImportForm'
-import { allChromosomes, cosmicLegend } from './util'
+import { allChromosomes, tierLegend } from './util'
 import { Grid } from '@material-ui/core'
 import { getSession } from '@jbrowse/core/util'
 
@@ -24,7 +24,10 @@ const IdeogramView = observer(({ model }: { model: any }) => {
       ? model.ideoAnnotations
       : undefined
 
-  const legend = model.ideoAnnotations ? cosmicLegend : undefined
+  const legend =
+    model.ideoAnnotations && 'tier' in model.ideoAnnotations[0].details
+      ? tierLegend
+      : undefined
 
   function onClickAnnot(annot: any) {
     const session = getSession(model)

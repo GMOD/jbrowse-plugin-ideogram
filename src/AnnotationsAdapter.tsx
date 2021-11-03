@@ -1,6 +1,16 @@
 import { FileLocation } from '@jbrowse/core/util/types'
 import { openLocation } from '@jbrowse/core/util/io'
 
+interface response {
+  [key: string]: unknown
+  success: boolean
+  occurances: string[]
+  type: number
+  message: string
+}
+
+let res: response
+
 /**
  * generates annotations in the form of two objects, one for the ideogram and one for the widget
  *  using a provided location of a TSV file
@@ -13,15 +23,41 @@ import { openLocation } from '@jbrowse/core/util/io'
 export async function generateAnnotations(location: FileLocation) {
   const ideo: any = []
   const widget: any = []
+  res = {
+    success: true,
+    occurances: [],
+    type: 0,
+    message: '',
+  }
 
   const { lines, columns } = await readAnnot(location)
 
-  lines.forEach((line: string) => {
-    ideo.push(parseLine(line, columns))
-    widget.push(widgetfy(parseLine(line, columns)))
-  })
+  if (!columns.includes('name') || !columns.includes('genomeLocation')) {
+    setResponseMessage(2)
+  } else {
+    lines.forEach((line: string) => {
+      ideo.push(parseLine(line, columns))
+      widget.push(widgetfy(parseLine(line, columns)))
+    })
+  }
 
-  return { widget, ideo }
+  return { widget, ideo, res }
+}
+
+function setResponseMessage(error: number) {
+  res.success = false
+  // missing location data
+  if (error === 1) {
+    res.message =
+      'There are datapoints missing location data and they will be ommitted from the annotations.'
+    res.type = 1
+  }
+  // missing required headers in tsv
+  if (error === 2) {
+    res.message =
+      'The annotations file is missing one of the required headers "name" or "genomeLocation".'
+    res.type = 2
+  }
 }
 
 /**
@@ -49,6 +85,9 @@ async function readAnnot(location: FileLocation) {
     if (line) {
       if (columns.length === 0) {
         columns = line.split('\t')
+        columns.forEach((column: string, i: number) => {
+          columns[i] = camelize(column)
+        })
       } else {
         rows.push(line)
       }
@@ -92,10 +131,15 @@ function parseCoords(property: string) {
  */
 function parseLine(line: string, columns: string[]) {
   let annot: any = { details: {} }
+  let named = false // prioritize naming a gene based on geneSymbol
   line.split('\t').forEach((property: string, i: number) => {
     if (property) {
       const camelProp = camelize(columns[i])
+      if (camelProp === 'name' && !named) {
+        annot['name'] = property
+      }
       if (camelProp === 'geneSymbol') {
+        named = true
         annot['name'] = property
       }
       if (camelProp === 'genomeLocation') {
@@ -105,6 +149,8 @@ function parseLine(line: string, columns: string[]) {
             ...annot,
             ...parsedProperties,
           }
+        } else {
+          setResponseMessage(1)
         }
       }
       if (camelProp === 'externalLinks') {

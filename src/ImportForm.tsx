@@ -11,9 +11,15 @@ import {
   MenuItem,
   Divider,
   Typography,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   makeStyles,
 } from '@material-ui/core'
 import { regions } from './util'
+import CloseIcon from '@material-ui/icons/Close'
+
 import { generateAnnotations } from './AnnotationsAdapter'
 
 const useStyles = makeStyles(theme => ({
@@ -25,6 +31,11 @@ const useStyles = makeStyles(theme => ({
   },
   importFormEntry: {
     minWidth: 180,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: '4px',
+    top: '4px',
   },
 }))
 
@@ -71,28 +82,48 @@ const RegionSelector = observer(
 const ImportForm = observer(({ model }: { model: any }) => {
   const classes = useStyles()
   const session = getSession(model)
-  const { assemblyNames, assemblies } = session
+  const { assemblyNames } = session
   const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
+
+  async function populateAnnotations() {
+    if (model.annotationsLocation) {
+      const { widget, ideo, res } = await generateAnnotations(
+        model.annotationsLocation,
+      )
+
+      if (res.type != 2) {
+        model.setWidgetAnnotations(widget)
+        model.setIdeoAnnotations(ideo)
+      }
+
+      if (!res.success) {
+        session.queueDialog((doneCallback: Function) => [
+          ErrorDialogue,
+          {
+            res,
+            handleClose: () => {
+              doneCallback()
+            },
+          },
+        ])
+      }
+    }
+  }
 
   async function handleOpen(assembly: string, region: string) {
     model.setAssembly(assembly)
     model.setRegion(region)
     model.setOrientation('horizontal')
     model.setAllRegions(false)
-    if (model.annotationsLocation) {
-      const { widget, ideo } = await generateAnnotations(
-        model.annotationsLocation,
-      )
-      model.setWidgetAnnotations(widget)
-      model.setIdeoAnnotations(ideo)
-    }
+    await populateAnnotations()
     model.setShowImportForm(false)
   }
 
-  function handleOpenAllRegions(assembly: string) {
+  async function handleOpenAllRegions(assembly: string) {
     model.setAllRegions(true)
     model.setAssembly(assembly)
+    await populateAnnotations()
     model.setShowImportForm(false)
   }
 
@@ -171,5 +202,32 @@ const ImportForm = observer(({ model }: { model: any }) => {
     </div>
   )
 })
+
+function ErrorDialogue({
+  res,
+  handleClose,
+}: {
+  res: any
+  handleClose: () => void
+}) {
+  const classes = useStyles()
+
+  return (
+    <Dialog open onClose={handleClose} maxWidth="sm">
+      <DialogTitle>
+        There are some problems with your annotations file
+        <IconButton
+          className={classes.closeButton}
+          onClick={() => handleClose()}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body1">{res.message}</Typography>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export default ImportForm

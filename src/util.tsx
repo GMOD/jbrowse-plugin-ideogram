@@ -52,7 +52,7 @@ export const allChromosomes = [
   'Y',
 ]
 
-export const cosmicLegend = [
+export const tierLegend = [
   {
     name: 'Tier 1',
     rows: [
