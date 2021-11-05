@@ -42,6 +42,7 @@ const IdeogramView = observer(({ model }: { model: any }) => {
         'ideogramFeature',
         {
           featureData: target,
+          view: model,
         },
       )
       // @ts-ignore

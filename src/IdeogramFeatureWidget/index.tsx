@@ -11,6 +11,7 @@ export default (_: PluginManager) => {
       id: ElementId,
       type: types.literal('IdeogramFeatureWidget'),
       featureData: types.frozen({}),
+      view: types.safeReference(_.pluggableMstType('view', 'stateModel')),
     })
     .actions(self => ({
       setFeatureData(data: any) {

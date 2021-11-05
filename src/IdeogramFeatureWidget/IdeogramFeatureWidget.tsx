@@ -5,7 +5,6 @@ import {
   BaseCard,
 } from '@jbrowse/core/BaseFeatureWidget/BaseFeatureDetail'
 import {
-  Divider,
   Paper,
   Table,
   TableBody,
@@ -13,8 +12,10 @@ import {
   TableRow,
   Link,
   Chip,
+  Button,
   makeStyles,
 } from '@material-ui/core'
+import { navToAnnotation } from '../util'
 
 const useStyles = makeStyles(() => ({
   table: {
@@ -105,6 +106,27 @@ function Synonyms(props: any) {
   )
 }
 
+function NavLink(props: any) {
+  const { feature, model } = props
+
+  return (
+    <BaseCard title="Navigate to feature on linear genome view">
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          onClick={() => {
+            navToAnnotation(`${feature.genomeLocation}`, model)
+          }}
+        >
+          Navigate
+        </Button>
+      </div>
+    </BaseCard>
+  )
+}
+
 function IdeoFeatureDetails(props: any) {
   const { model } = props
   const feat = model.featureData
@@ -122,9 +144,8 @@ function IdeoFeatureDetails(props: any) {
         {...props}
         omit={['synonyms', 'externalLinks']}
       />
-      <Divider />
+      <NavLink feature={fullFeature} model={model}></NavLink>
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
-      <Divider />
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
     </Paper>
   )
