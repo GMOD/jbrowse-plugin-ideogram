@@ -1,10 +1,12 @@
+import PauseIcon from '@material-ui/icons/Pause'
 import Plugin from '@jbrowse/core/Plugin'
 import PluginManager from '@jbrowse/core/PluginManager'
-import { version } from '../package.json'
-import { AbstractSessionModel, isAbstractMenuManager } from '@jbrowse/core/util'
+import { SessionWithWidgets, isAbstractMenuManager } from '@jbrowse/core/util'
 import ViewType from '@jbrowse/core/pluggableElementTypes/ViewType'
-import PauseIcon from '@material-ui/icons/Pause'
+import WidgetType from '@jbrowse/core/pluggableElementTypes/WidgetType'
+import { version } from '../package.json'
 import IdeogramView from './IdeogramView'
+import IdeogramFeatureWidgetF from './IdeogramFeatureWidget'
 import stateModelFactory from './model'
 
 export default class IdeogramPlugin extends Plugin {
@@ -19,7 +21,14 @@ export default class IdeogramPlugin extends Plugin {
           stateModel: stateModelFactory(pluginManager),
           ReactComponent: IdeogramView,
         }),
-    )
+    ),
+      pluginManager.addWidgetType(() => {
+        return new WidgetType({
+          name: 'IdeogramFeatureWidget',
+          heading: 'Feature Details',
+          ...IdeogramFeatureWidgetF(pluginManager),
+        })
+      })
   }
 
   configure(pluginManager: PluginManager) {
@@ -27,7 +36,7 @@ export default class IdeogramPlugin extends Plugin {
       pluginManager.rootModel.appendToSubMenu(['Add'], {
         label: 'Ideogram view',
         icon: PauseIcon,
-        onClick: (session: AbstractSessionModel) => {
+        onClick: (session: SessionWithWidgets) => {
           session.addView('IdeogramView', {})
           const xView = session.views.length - 1
           // @ts-ignore
