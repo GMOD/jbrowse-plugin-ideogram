@@ -5,6 +5,7 @@ import ImportForm from './ImportForm'
 import { allChromosomes, tierLegend } from './util'
 import { Grid, Typography, Link } from '@material-ui/core'
 import { getSession } from '@jbrowse/core/util'
+import PulseLoader from 'react-spinners/PulseLoader'
 
 let iter = 0
 const IdeogramView = observer(({ model }: { model: any }) => {
@@ -78,17 +79,35 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     model.allRegions,
     model.region,
     model.showAnnotations,
+    model.showLoading,
   ])
 
   return (
     <div>
       {model.showImportForm ? <ImportForm model={model} /> : null}
-      {!model.showImportForm && model.orientation === 'horizontal' ? (
+      {!model.showImportForm && model.showLoading ? (
+        <Grid
+          container
+          spacing={1}
+          justifyContent="center"
+          alignItems="center"
+          style={{ paddingTop: '5px' }}
+          direction="column"
+        >
+          <Typography variant="body1">Generating annotations</Typography>
+          <PulseLoader color="#0D233F" speedMultiplier={0.5} size={10} />
+        </Grid>
+      ) : null}
+      {!model.showImportForm &&
+      !model.showLoading &&
+      model.orientation === 'horizontal' ? (
         <Grid container spacing={1} justifyContent="center" alignItems="center">
           <div ref={ref} id={identifier}></div>
         </Grid>
       ) : null}
-      {!model.showImportForm && model.orientation === 'vertical' ? (
+      {!model.showImportForm &&
+      !model.showLoading &&
+      model.orientation === 'vertical' ? (
         <div ref={ref} id={identifier} style={{ paddingTop: '5px' }}></div>
       ) : null}
       <Typography

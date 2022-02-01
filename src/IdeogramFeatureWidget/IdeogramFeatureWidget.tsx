@@ -8,6 +8,7 @@ import {
   Paper,
   Table,
   TableBody,
+  TableHead,
   TableCell,
   TableRow,
   Link,
@@ -23,6 +24,11 @@ const useStyles = makeStyles(() => ({
   },
   link: {
     color: 'rgb(0, 0, 238)',
+  },
+  tableContainer: {
+    width: '100%',
+    maxHeight: 600,
+    overflow: 'auto',
   },
 }))
 
@@ -60,7 +66,7 @@ function ExternalLinks(props: any) {
 
   return (
     <BaseCard title="External Links">
-      <div style={{ width: '100%', maxHeight: 600, overflow: 'auto' }}>
+      <div className={classes.tableContainer}>
         <Table className={classes.table}>
           <TableBody>
             {externalLinkArray.map((externalLink: string, key: string) => (
@@ -85,7 +91,7 @@ function Synonyms(props: any) {
 
   return (
     <BaseCard title="Synonyms">
-      <div style={{ width: '100%', maxHeight: 600, overflow: 'auto' }}>
+      <div className={classes.tableContainer}>
         <Table className={classes.table}>
           <TableBody>
             <TableRow key={`${feature.geneId}-synonyms`}>
@@ -127,6 +133,74 @@ function NavLink(props: any) {
   )
 }
 
+function Pathways(props: any) {
+  const classes = useStyles()
+  const { feature } = props
+
+  let pathways = feature.pathways
+
+  pathways = pathways
+    .slice()
+    .sort(
+      (a: any, b: any) =>
+        parseFloat(a.entities.pValue) - parseFloat(b.entities.pValue),
+    )
+
+  const headers = [
+    'Pathway name',
+    'Entities found',
+    'Entities Total',
+    'Entities ratio',
+    'Entities pValue',
+    'Entities FDR',
+    'Reactions found',
+    'Reactions total',
+    'Reactions ratio',
+  ]
+
+  return (
+    <BaseCard title="Pathways">
+      <div className={classes.tableContainer}>
+        <Table className={classes.table}>
+          <TableHead>
+            <TableRow>
+              {headers.map((header: string, index: number) => (
+                <TableCell key={`${index}-${header}`}>{header}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {pathways.map((pathway: any, key: string) => (
+              <TableRow key={key}>
+                <TableCell>
+                  <Link
+                    target="_blank"
+                    rel="noopener"
+                    underline="always"
+                    href={`https://reactome.org/content/detail/${pathway.stId}`}
+                  >
+                    {pathway.name}
+                  </Link>
+                </TableCell>
+                <TableCell>{pathway.entities.found}</TableCell>
+                <TableCell>{pathway.entities.total}</TableCell>
+                <TableCell>{pathway.entities.ratio.toExponential(2)}</TableCell>
+                <TableCell>
+                  {pathway.entities.pValue.toExponential(2)}
+                </TableCell>
+                <TableCell>{pathway.entities.fdr.toExponential(2)}</TableCell>
+                <TableCell>{pathway.reactions.found}</TableCell>
+                <TableCell>{pathway.reactions.total}</TableCell>
+                <TableCell>{pathway.reactions.ratio.toFixed(3)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </BaseCard>
+  )
+}
+
 function IdeoFeatureDetails(props: any) {
   const { model } = props
   const feat = model.featureData
@@ -142,11 +216,14 @@ function IdeoFeatureDetails(props: any) {
       <FeatureDetails
         feature={fullFeature}
         {...props}
-        omit={['synonyms', 'externalLinks']}
+        omit={['synonyms', 'externalLinks', 'pathways', 'reactomeIds']}
       />
       <NavLink feature={fullFeature} model={model}></NavLink>
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
+      {fullFeature.pathways &&
+        !fullFeature.pathways.includes(undefined) &&
+        fullFeature.pathways.length > 0 && <Pathways feature={fullFeature} />}
     </Paper>
   )
 }

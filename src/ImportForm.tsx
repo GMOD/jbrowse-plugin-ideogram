@@ -6,7 +6,9 @@ import { getSession } from '@jbrowse/core/util'
 import {
   Button,
   Container,
+  Checkbox,
   Grid,
+  FormControlLabel,
   TextField,
   MenuItem,
   Divider,
@@ -85,11 +87,14 @@ const ImportForm = observer(({ model }: { model: any }) => {
   const { assemblyNames } = session
   const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
+  const [checked, setChecked] = useState(false)
 
   async function populateAnnotations() {
     if (model.annotationsLocation) {
+      model.setShowLoading(true)
       const { widget, ideo, res } = await generateAnnotations(
         model.annotationsLocation,
+        model.withReactome,
       )
 
       if (res.type != 2) {
@@ -116,8 +121,9 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setRegion(region)
     model.setOrientation('horizontal')
     model.setAllRegions(false)
-    await populateAnnotations()
     model.setShowImportForm(false)
+    await populateAnnotations()
+    model.setShowLoading(false)
   }
 
   async function handleOpenAllRegions(assembly: string) {
@@ -125,6 +131,11 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setAssembly(assembly)
     await populateAnnotations()
     model.setShowImportForm(false)
+  }
+
+  const handleReactomeAnalysis = (event: any) => {
+    setChecked(event?.target.checked)
+    model.setWithReactome(event?.target.checked)
   }
 
   return (
@@ -195,7 +206,19 @@ const ImportForm = observer(({ model }: { model: any }) => {
               name="Annotations file"
               location={model.annotationsLocation}
               setLocation={loc => model.setAnnotationsLocation(loc)}
-            ></FileSelector>
+            />
+          </Grid>
+          <Grid item>
+            <FormControlLabel
+              label="Analyze annotations with Reactome"
+              control={
+                <Checkbox
+                  checked={checked}
+                  color="primary"
+                  onChange={handleReactomeAnalysis}
+                />
+              }
+            />
           </Grid>
         </Grid>
       </Container>

@@ -18,9 +18,13 @@ let res: response
  *  library to render the annotations properly and the ideo object has properties formatted and
  *  distributed in a way that reads better for the IdeogramFeatureWidget when clicked
  * @param location - the location of the TSV file to be turned into annotations on the ideogram
- * @returns widget object and ideo object from the TSV provided information
+ * @param withReactome - whether to cross reference the provided annots with reactome data
+ * @returns widget object, ideo object, from the TSV provided information, and response for error display
  */
-export async function generateAnnotations(location: FileLocation) {
+export async function generateAnnotations(
+  location: FileLocation,
+  withReactome: boolean,
+) {
   const ideo: any = []
   const widget: any = []
   res = {
@@ -30,18 +34,94 @@ export async function generateAnnotations(location: FileLocation) {
     message: '',
   }
 
-  const { lines, columns } = await readAnnot(location)
-
-  if (!columns.includes('name') || !columns.includes('genomeLocation')) {
-    setResponseMessage(2)
-  } else {
-    lines.forEach((line: string) => {
-      ideo.push(parseLine(line, columns))
-      widget.push(widgetfy(parseLine(line, columns)))
+  // fetching the contents of the annotations file provided by the user
+  try {
+    const fileContents = await fetchFile(location)
+    // then reading it into lines and columns
+    const { lines, columns } = readAnnot(fileContents)
+    // fetches the dictionary of genes that's hosted on jbrowse (with coordinating reactome ids)
+    const dictionary = await fetchFile({
+      uri:
+        'https://jbrowse.org/genomes/GRCh38/reactome_xref_symbols_grch38.json',
+      locationType: 'UriLocation',
     })
+    let pathways: any = undefined
+    if (withReactome) {
+      // makes the request to reactome to get all the pathways related to the annotated genes, and converts it to a dictionary for easy lookup
+      pathways = reactomeToDictionary(
+        await fetchPathways(checkFile(lines, columns)),
+      )
+    }
+
+    if (!columns.includes('name')) {
+      setResponseMessage(2)
+    } else {
+      lines.forEach((line: string) => {
+        ideo.push(parseLine(line, columns, JSON.parse(dictionary), pathways))
+        widget.push(
+          widgetfy(parseLine(line, columns, JSON.parse(dictionary), pathways)),
+        )
+      })
+    }
+  } catch (error) {
+    setResponseMessage(2)
+  }
+  return { widget, ideo, res }
+}
+
+function checkFile(lines: any, columns: any) {
+  let index = -1
+  if (columns.length > 1) {
+    index = columns.includes('geneSymbol')
+      ? columns.indexOf('geneSymbol')
+      : columns.includes('genes')
+      ? columns.indexOf('genes')
+      : columns.includes('name')
+      ? columns.indexOf('name')
+      : -1
+  } else {
+    index = 0
   }
 
-  return { widget, ideo, res }
+  let fileContents = ''
+  if (index >= 0) {
+    lines.forEach((line: any) => {
+      fileContents = fileContents.concat('\n', line.split('\t')[index])
+    })
+  }
+  return fileContents
+}
+
+/**
+ * restructures the response given by reactome when feeding it a list of genes into a dictionary to improve processing time
+ * @param reactomeRes the response from reactome after passing it the list of genes to be annotated
+ * @returns a restructured dictionary of the response
+ */
+function reactomeToDictionary(reactomeRes: any) {
+  const pathways = reactomeRes.pathways
+  const dict: any = {}
+
+  pathways.forEach((pathway: any) => {
+    dict[pathway.stId] = {
+      ...pathway,
+    }
+  })
+
+  return dict
+}
+
+async function fetchPathways(body: any) {
+  const response = await fetch(
+    'https://reactome.org/AnalysisService/identifiers/projection?includeDisease=true&interactors=false&order=ASC&pValue=1&resource=TOTAL&sortBy=ENTITIES_PVALUE',
+    {
+      method: 'POST',
+      body,
+    },
+  )
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${response.status} ${response.statusText}`)
+  }
+  return response.json()
 }
 
 function setResponseMessage(error: number) {
@@ -54,9 +134,14 @@ function setResponseMessage(error: number) {
   }
   // missing required headers in tsv
   if (error === 2) {
-    res.message =
-      'The annotations file is missing one of the required headers "name" or "genomeLocation".'
+    res.message = 'The annotations file is missing a required header: "name".'
     res.type = 2
+  }
+  // missing location data and the gene names could not be found within the reference file
+  if (error === 3) {
+    res.message =
+      'Some provided gene ids could not be coordinated with a location and they will be ommitted from the annotations.'
+    res.type = 3
   }
 }
 
@@ -75,13 +160,15 @@ function widgetfy(obj: any) {
   return newObj
 }
 
-async function readAnnot(location: FileLocation) {
-  const fileContents = (await openLocation(location).readFile('utf8')) as string
+async function fetchFile(location: FileLocation) {
+  return (await openLocation(location).readFile('utf8')) as string
+}
 
+function readAnnot(fileContents: any) {
   const lines = fileContents.split('\n')
   const rows: string[] = []
   let columns: string[] = []
-  lines.forEach(line => {
+  lines.forEach((line: any) => {
     if (line) {
       if (columns.length === 0) {
         columns = line.split('\t')
@@ -129,9 +216,15 @@ function parseCoords(property: string) {
  * @param columns - the columns of the data from the tsv
  * @returns the object representation of the line of data
  */
-function parseLine(line: string, columns: string[]) {
+function parseLine(
+  line: string,
+  columns: string[],
+  dictionary: any,
+  pathways?: any,
+) {
   let annot: any = { details: {} }
   let named = false // prioritize naming a gene based on geneSymbol
+  let hasLoc = false
   line.split('\t').forEach((property: string, i: number) => {
     if (property) {
       const camelProp = camelize(columns[i])
@@ -152,6 +245,7 @@ function parseLine(line: string, columns: string[]) {
         } else {
           setResponseMessage(1)
         }
+        hasLoc = true
       }
       if (camelProp === 'externalLinks') {
         property = JSON.parse(property)
@@ -169,5 +263,33 @@ function parseLine(line: string, columns: string[]) {
       annot['details'][camelProp] = property
     }
   })
+
+  if (hasLoc === false) {
+    if (dictionary[annot['name']]) {
+      annot['chr'] = dictionary[annot['name']]['chr']
+      annot['start'] = dictionary[annot['name']]['start']
+      annot['stop'] = dictionary[annot['name']]['stop']
+      annot['details']['reactomeIds'] = dictionary[annot['name']]['reactomeIds']
+      annot['details'][
+        'genomeLocation'
+      ] = `${annot['chr']}:${annot['start']}-${annot['stop']}`
+    } else {
+      setResponseMessage(3)
+    }
+  } else {
+    if (dictionary[annot['name']]) {
+      annot['details']['reactomeIds'] = dictionary[annot['name']]['reactomeIds']
+    }
+  }
+
+  if (annot['details']['reactomeIds'] && pathways) {
+    annot['details']['pathways'] = []
+    annot['details']['reactomeIds'].forEach((id: any) => {
+      if (pathways[id]) {
+        annot['details']['pathways'].push(pathways[id])
+      }
+    })
+  }
+
   return annot
 }

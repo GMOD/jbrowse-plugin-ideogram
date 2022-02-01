@@ -24,6 +24,8 @@ export default function IdeogramView(pluginManager: PluginManager) {
       allRegions: false,
       showImportForm: true,
       showAnnotations: true,
+      withReactome: false,
+      showLoading: false,
     })
     .volatile(() => ({
       annotationsLocation: (undefined as unknown) as FileLocation,
@@ -65,6 +67,12 @@ export default function IdeogramView(pluginManager: PluginManager) {
       },
       setIdeoAnnotations(obj: object) {
         self.ideoAnnotations = obj
+      },
+      setWithReactome(toggle: boolean) {
+        self.withReactome = toggle
+      },
+      setShowLoading(toggle: boolean) {
+        self.showLoading = toggle
       },
       toggleAllRegions(toggle: boolean) {
         if (toggle === false) {

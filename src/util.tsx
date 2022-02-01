@@ -85,7 +85,6 @@ export async function navToAnnotation(
   } else {
     const session = getSession(model)
     const { assemblyManager } = session
-    console.log(assembly)
     const sessionAssembly = await assemblyManager.waitForAssembly(assembly)
     if (sessionAssembly) {
       try {
