@@ -182,16 +182,22 @@ function Pathways(props: any) {
                     {pathway.name}
                   </Link>
                 </TableCell>
-                <TableCell>{pathway.entities.found}</TableCell>
-                <TableCell>{pathway.entities.total}</TableCell>
-                <TableCell>{pathway.entities.ratio.toExponential(2)}</TableCell>
-                <TableCell>
+                <TableCell align="right">{pathway.entities.found}</TableCell>
+                <TableCell align="right">{pathway.entities.total}</TableCell>
+                <TableCell align="right">
+                  {pathway.entities.ratio.toExponential(2)}
+                </TableCell>
+                <TableCell align="right">
                   {pathway.entities.pValue.toExponential(2)}
                 </TableCell>
-                <TableCell>{pathway.entities.fdr.toExponential(2)}</TableCell>
-                <TableCell>{pathway.reactions.found}</TableCell>
-                <TableCell>{pathway.reactions.total}</TableCell>
-                <TableCell>{pathway.reactions.ratio.toFixed(3)}</TableCell>
+                <TableCell align="right">
+                  {pathway.entities.fdr.toExponential(2)}
+                </TableCell>
+                <TableCell align="right">{pathway.reactions.found}</TableCell>
+                <TableCell align="right">{pathway.reactions.total}</TableCell>
+                <TableCell align="right">
+                  {pathway.reactions.ratio.toFixed(3)}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

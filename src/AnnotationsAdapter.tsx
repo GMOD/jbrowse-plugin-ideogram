@@ -39,12 +39,17 @@ export async function generateAnnotations(
     const fileContents = await fetchFile(location)
     // then reading it into lines and columns
     const { lines, columns } = readAnnot(fileContents)
-    // fetches the dictionary of genes that's hosted on jbrowse (with coordinating reactome ids)
-    const dictionary = await fetchFile({
-      uri:
-        'https://jbrowse.org/genomes/GRCh38/reactome_xref_symbols_grch38.json',
-      locationType: 'UriLocation',
-    })
+    let dictionary: any = undefined
+    if (!columns.includes('genomeLocation')) {
+      // fetches the dictionary of genes that's hosted on jbrowse (with coordinating reactome ids)
+      dictionary = JSON.parse(
+        await fetchFile({
+          uri:
+            'https://jbrowse.org/genomes/GRCh38/reactome_xref_symbols_grch38.json',
+          locationType: 'UriLocation',
+        }),
+      )
+    }
     let pathways: any = undefined
     if (withReactome) {
       // makes the request to reactome to get all the pathways related to the annotated genes, and converts it to a dictionary for easy lookup
@@ -54,16 +59,16 @@ export async function generateAnnotations(
     }
 
     if (!columns.includes('name')) {
+      console.log(columns)
       setResponseMessage(2)
     } else {
       lines.forEach((line: string) => {
-        ideo.push(parseLine(line, columns, JSON.parse(dictionary), pathways))
-        widget.push(
-          widgetfy(parseLine(line, columns, JSON.parse(dictionary), pathways)),
-        )
+        ideo.push(parseLine(line, columns, dictionary, pathways))
+        widget.push(widgetfy(parseLine(line, columns, dictionary, pathways)))
       })
     }
   } catch (error) {
+    console.log(error)
     setResponseMessage(2)
   }
   return { widget, ideo, res }
@@ -219,7 +224,7 @@ function parseCoords(property: string) {
 function parseLine(
   line: string,
   columns: string[],
-  dictionary: any,
+  dictionary?: any,
   pathways?: any,
 ) {
   let annot: any = { details: {} }
@@ -277,7 +282,7 @@ function parseLine(
       setResponseMessage(3)
     }
   } else {
-    if (dictionary[annot['name']]) {
+    if (pathways && dictionary && dictionary[annot['name']]) {
       annot['details']['reactomeIds'] = dictionary[annot['name']]['reactomeIds']
     }
   }
