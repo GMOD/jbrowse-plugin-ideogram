@@ -6,19 +6,16 @@ import { getSession } from '@jbrowse/core/util'
 import {
   Button,
   Container,
+  Checkbox,
   Grid,
+  FormControlLabel,
   TextField,
   MenuItem,
   Divider,
   Typography,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   makeStyles,
 } from '@material-ui/core'
 import { regions } from './util'
-import CloseIcon from '@material-ui/icons/Close'
 
 import { generateAnnotations } from './AnnotationsAdapter'
 
@@ -85,28 +82,34 @@ const ImportForm = observer(({ model }: { model: any }) => {
   const { assemblyNames } = session
   const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
+  const [checked, setChecked] = useState(model.withReactome)
 
   async function populateAnnotations() {
     if (model.annotationsLocation) {
-      const { widget, ideo, res } = await generateAnnotations(
+      model.setShowLoading(true)
+      const { widget, ideo, pathways, res } = await generateAnnotations(
         model.annotationsLocation,
+        model.withReactome,
       )
 
-      if (res.type != 2) {
+      if (res.type !== 2) {
         model.setWidgetAnnotations(widget)
         model.setIdeoAnnotations(ideo)
       }
 
+      if (model.withReactome) {
+        session.addView('IdeogramView', {})
+        const xView = session.views.length - 1
+        // @ts-ignore
+        session.views[xView].setDisplayName('Reactome Analysis Results')
+        // @ts-ignore
+        session.views[xView].setPathways(pathways)
+        // @ts-ignore
+        session.views[xView].setIsAnalysisResults(true)
+      }
+
       if (!res.success) {
-        session.queueDialog((doneCallback: Function) => [
-          ErrorDialogue,
-          {
-            res,
-            handleClose: () => {
-              doneCallback()
-            },
-          },
-        ])
+        session.notify(res.message, 'warning')
       }
     }
   }
@@ -116,8 +119,9 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setRegion(region)
     model.setOrientation('horizontal')
     model.setAllRegions(false)
-    await populateAnnotations()
     model.setShowImportForm(false)
+    await populateAnnotations()
+    model.setShowLoading(false)
   }
 
   async function handleOpenAllRegions(assembly: string) {
@@ -125,6 +129,12 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setAssembly(assembly)
     await populateAnnotations()
     model.setShowImportForm(false)
+    model.setShowLoading(false)
+  }
+
+  const handleReactomeAnalysis = (event: any) => {
+    setChecked(event?.target.checked)
+    model.setWithReactome(event?.target.checked)
   }
 
   return (
@@ -195,39 +205,24 @@ const ImportForm = observer(({ model }: { model: any }) => {
               name="Annotations file"
               location={model.annotationsLocation}
               setLocation={loc => model.setAnnotationsLocation(loc)}
-            ></FileSelector>
+            />
+          </Grid>
+          <Grid item>
+            <FormControlLabel
+              label="Analyze annotations with Reactome"
+              control={
+                <Checkbox
+                  checked={checked}
+                  color="primary"
+                  onChange={handleReactomeAnalysis}
+                />
+              }
+            />
           </Grid>
         </Grid>
       </Container>
     </div>
   )
 })
-
-function ErrorDialogue({
-  res,
-  handleClose,
-}: {
-  res: any
-  handleClose: () => void
-}) {
-  const classes = useStyles()
-
-  return (
-    <Dialog open onClose={handleClose} maxWidth="sm">
-      <DialogTitle>
-        There are some problems with your annotations file
-        <IconButton
-          className={classes.closeButton}
-          onClick={() => handleClose()}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Typography variant="body1">{res.message}</Typography>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default ImportForm

@@ -16,6 +16,7 @@ import {
   makeStyles,
 } from '@material-ui/core'
 import { navToAnnotation } from '../util'
+import Pathways from '../Pathways'
 
 const useStyles = makeStyles(() => ({
   table: {
@@ -23,6 +24,11 @@ const useStyles = makeStyles(() => ({
   },
   link: {
     color: 'rgb(0, 0, 238)',
+  },
+  tableContainer: {
+    width: '100%',
+    maxHeight: 600,
+    overflow: 'auto',
   },
 }))
 
@@ -60,7 +66,7 @@ function ExternalLinks(props: any) {
 
   return (
     <BaseCard title="External Links">
-      <div style={{ width: '100%', maxHeight: 600, overflow: 'auto' }}>
+      <div className={classes.tableContainer}>
         <Table className={classes.table}>
           <TableBody>
             {externalLinkArray.map((externalLink: string, key: string) => (
@@ -85,7 +91,7 @@ function Synonyms(props: any) {
 
   return (
     <BaseCard title="Synonyms">
-      <div style={{ width: '100%', maxHeight: 600, overflow: 'auto' }}>
+      <div className={classes.tableContainer}>
         <Table className={classes.table}>
           <TableBody>
             <TableRow key={`${feature.geneId}-synonyms`}>
@@ -142,11 +148,16 @@ function IdeoFeatureDetails(props: any) {
       <FeatureDetails
         feature={fullFeature}
         {...props}
-        omit={['synonyms', 'externalLinks']}
+        omit={['synonyms', 'externalLinks', 'pathways', 'reactomeIds']}
       />
       <NavLink feature={fullFeature} model={model}></NavLink>
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
+      {fullFeature.pathways &&
+        !fullFeature.pathways.includes(undefined) &&
+        fullFeature.pathways.length > 0 && (
+          <Pathways model={model} pathways={fullFeature.pathways} />
+        )}
     </Paper>
   )
 }

@@ -25,7 +25,7 @@ yarn start
 
 Then open JBrowse Web to (assuming it is running on port 3000):
 
-http://localhost:3000/?config=http://localhost:9000/config.json
+http://localhost:3000/?config=http://localhost:9080/config.json
 
 #### Demo
 
@@ -51,8 +51,9 @@ Add to the "plugins" of your JBrowse Web config:
 To annotate features on the ideogram as in the screenshot above, data must be uploaded via the setup screen's open file interface.
 
 - annotations must be uploaded as a TSV with column headers
-- location data must be under a heading called 'genome location' and be in the format of 'chromosomeNumber:start-end', e.g. '1:39895426-39902013'
-- each row of data must include `name` and `genomeLocation`
+- enforced location data must be under a heading called 'genome location' and be in the format of 'chromosomeNumber:start-end', e.g. '1:39895426-39902013'
+- alternatively, annotation files provided without genome location data will attempt to be cross referenced with a remote file of gene locations
+- each row of data must include `name`
 - any external links that wish to be formatted on the widget properly must be in the following format:'
   - under a header 'external links'
   - a json string appearing as `"[{"name": "MYLINK", "link": "https://my-link.com/"}]"`
@@ -68,9 +69,9 @@ To annotate features on the ideogram as in the screenshot above, data must be up
 #### TSV with only required headers
 
 ```tsv
-name  genomeLocation
-note1 1:39895426-39902013
-note2 1:157573749-157598080
+name
+note1
+note2
 ```
 
 #### TSV with optional headers

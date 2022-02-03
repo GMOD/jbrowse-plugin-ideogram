@@ -21,14 +21,15 @@ export default class IdeogramPlugin extends Plugin {
           stateModel: stateModelFactory(pluginManager),
           ReactComponent: IdeogramView,
         }),
-    ),
-      pluginManager.addWidgetType(() => {
-        return new WidgetType({
-          name: 'IdeogramFeatureWidget',
-          heading: 'Feature Details',
-          ...IdeogramFeatureWidgetF(pluginManager),
-        })
+    )
+
+    pluginManager.addWidgetType(() => {
+      return new WidgetType({
+        name: 'IdeogramFeatureWidget',
+        heading: 'Feature Details',
+        ...IdeogramFeatureWidgetF(pluginManager),
       })
+    })
   }
 
   configure(pluginManager: PluginManager) {
