@@ -34,7 +34,7 @@ const IdeogramView = observer(({ model }: { model: any }) => {
   function onClickAnnot(annot: any) {
     const session = getSession(model)
     const target = model.widgetAnnotations.filter(function(data: any) {
-      return data.name == annot.name
+      return data.name === annot.name
     })[0]
 
     model.setSelectedAnnot(annot.name)

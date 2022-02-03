@@ -92,7 +92,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
         model.withReactome,
       )
 
-      if (res.type != 2) {
+      if (res.type !== 2) {
         model.setWidgetAnnotations(widget)
         model.setIdeoAnnotations(ideo)
       }
