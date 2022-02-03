@@ -1,3 +1,12 @@
+# v1.2.0
+
+- added ability to enhance annotations with reactome pathway data
+- added reactome pathway annotations in ideogram widget for individual genes provided
+- added reactome pathway annotations for full file in a separate view for the list of genes provided
+- added highlight when clicking on an annotation
+- added highlight when clicking on a pathway in the separate view to highlight features in that pathway
+- added cross-reference remote file for genome locations if location data is not provided
+
 # v1.1.0
 
 - Moved File > Add > Ideogram View to Add > Ideogram View
