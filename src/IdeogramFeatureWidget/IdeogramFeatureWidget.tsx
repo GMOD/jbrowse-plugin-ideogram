@@ -8,7 +8,6 @@ import {
   Paper,
   Table,
   TableBody,
-  TableHead,
   TableCell,
   TableRow,
   Link,
@@ -17,6 +16,7 @@ import {
   makeStyles,
 } from '@material-ui/core'
 import { navToAnnotation } from '../util'
+import Pathways from '../Pathways'
 
 const useStyles = makeStyles(() => ({
   table: {
@@ -133,80 +133,6 @@ function NavLink(props: any) {
   )
 }
 
-function Pathways(props: any) {
-  const classes = useStyles()
-  const { feature } = props
-
-  let pathways = feature.pathways
-
-  pathways = pathways
-    .slice()
-    .sort(
-      (a: any, b: any) =>
-        parseFloat(a.entities.pValue) - parseFloat(b.entities.pValue),
-    )
-
-  const headers = [
-    'Pathway name',
-    'Entities found',
-    'Entities Total',
-    'Entities ratio',
-    'Entities pValue',
-    'Entities FDR',
-    'Reactions found',
-    'Reactions total',
-    'Reactions ratio',
-  ]
-
-  return (
-    <BaseCard title="Pathways">
-      <div className={classes.tableContainer}>
-        <Table className={classes.table}>
-          <TableHead>
-            <TableRow>
-              {headers.map((header: string, index: number) => (
-                <TableCell key={`${index}-${header}`}>{header}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pathways.map((pathway: any, key: string) => (
-              <TableRow key={key}>
-                <TableCell>
-                  <Link
-                    target="_blank"
-                    rel="noopener"
-                    underline="always"
-                    href={`https://reactome.org/content/detail/${pathway.stId}`}
-                  >
-                    {pathway.name}
-                  </Link>
-                </TableCell>
-                <TableCell align="right">{pathway.entities.found}</TableCell>
-                <TableCell align="right">{pathway.entities.total}</TableCell>
-                <TableCell align="right">
-                  {pathway.entities.ratio.toExponential(2)}
-                </TableCell>
-                <TableCell align="right">
-                  {pathway.entities.pValue.toExponential(2)}
-                </TableCell>
-                <TableCell align="right">
-                  {pathway.entities.fdr.toExponential(2)}
-                </TableCell>
-                <TableCell align="right">{pathway.reactions.found}</TableCell>
-                <TableCell align="right">{pathway.reactions.total}</TableCell>
-                <TableCell align="right">
-                  {pathway.reactions.ratio.toFixed(3)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </BaseCard>
-  )
-}
-
 function IdeoFeatureDetails(props: any) {
   const { model } = props
   const feat = model.featureData
@@ -229,7 +155,9 @@ function IdeoFeatureDetails(props: any) {
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
       {fullFeature.pathways &&
         !fullFeature.pathways.includes(undefined) &&
-        fullFeature.pathways.length > 0 && <Pathways feature={fullFeature} />}
+        fullFeature.pathways.length > 0 && (
+          <Pathways model={model} pathways={fullFeature.pathways} />
+        )}
     </Paper>
   )
 }

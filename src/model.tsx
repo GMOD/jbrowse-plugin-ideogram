@@ -19,6 +19,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
       orientation: 'vertical',
       region: '1',
       assembly: 'hg38',
+      selectedAnnot: '',
 
       // display options
       allRegions: false,
@@ -26,11 +27,14 @@ export default function IdeogramView(pluginManager: PluginManager) {
       showAnnotations: true,
       withReactome: false,
       showLoading: false,
+      isAnalysisResults: false,
     })
     .volatile(() => ({
       annotationsLocation: (undefined as unknown) as FileLocation,
       widgetAnnotations: (undefined as unknown) as object,
       ideoAnnotations: (undefined as unknown) as object,
+      pathways: (undefined as unknown) as object,
+      highlightedAnnots: (undefined as unknown) as Array<object>,
     }))
     .actions(self => ({
       setWidth(n: number) {
@@ -73,6 +77,37 @@ export default function IdeogramView(pluginManager: PluginManager) {
       },
       setShowLoading(toggle: boolean) {
         self.showLoading = toggle
+      },
+      setPathways(obj: object) {
+        self.pathways = obj
+      },
+      setIsAnalysisResults(toggle: boolean) {
+        self.isAnalysisResults = toggle
+      },
+      setSelectedAnnot(item: string) {
+        self.selectedAnnot = item
+        this.applyHighlighting()
+      },
+      setHighlightedAnnots(arr: Array<object>) {
+        self.highlightedAnnots = arr
+        this.applyHighlighting()
+      },
+      applyHighlighting() {
+        // @ts-ignore
+        self.ideoAnnotations.filter((annot: any) => {
+          if (self.highlightedAnnots?.includes(annot.name)) {
+            annot.color = '#FFC20A'
+          }
+          if (self.selectedAnnot === annot.name) {
+            annot.color = '#000000'
+          }
+          if (
+            !self.highlightedAnnots?.includes(annot.name) &&
+            self.selectedAnnot !== annot.name
+          ) {
+            annot.color = annot.prevColor
+          }
+        })
       },
       toggleAllRegions(toggle: boolean) {
         if (toggle === false) {

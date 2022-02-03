@@ -6,6 +6,7 @@ import { allChromosomes, tierLegend } from './util'
 import { Grid, Typography, Link } from '@material-ui/core'
 import { getSession } from '@jbrowse/core/util'
 import PulseLoader from 'react-spinners/PulseLoader'
+import Pathways from './Pathways'
 
 let iter = 0
 const IdeogramView = observer(({ model }: { model: any }) => {
@@ -17,7 +18,7 @@ const IdeogramView = observer(({ model }: { model: any }) => {
 
   const chromosomes = model.allRegions ? allChromosomes : [model.region]
   const chrHeight =
-    model.allRegions || model.orientation === 'vertical' ? 300 : 900
+    model.allRegions || model.orientation === 'vertical' ? 500 : 900
   const chrWidth = model.allRegions && model.orientation === 'vertical' ? 8 : 10
   const showBandLabels = !model.allRegions
   const annotations =
@@ -35,6 +36,8 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     const target = model.widgetAnnotations.filter(function(data: any) {
       return data.name == annot.name
     })[0]
+
+    model.setSelectedAnnot(annot.name)
 
     if (session) {
       // @ts-ignore
@@ -80,12 +83,19 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     model.region,
     model.showAnnotations,
     model.showLoading,
+    model.isAnalysisResults,
+    model.selectedAnnot,
+    model.highlightedAnnots,
   ])
 
   return (
     <div>
-      {model.showImportForm ? <ImportForm model={model} /> : null}
-      {!model.showImportForm && model.showLoading ? (
+      {model.showImportForm && !model.isAnalysisResults ? (
+        <ImportForm model={model} />
+      ) : null}
+      {!model.showImportForm &&
+      model.showLoading &&
+      !model.isAnalysisResults ? (
         <Grid
           container
           spacing={1}
@@ -100,6 +110,7 @@ const IdeogramView = observer(({ model }: { model: any }) => {
       ) : null}
       {!model.showImportForm &&
       !model.showLoading &&
+      !model.isAnalysisResults &&
       model.orientation === 'horizontal' ? (
         <Grid container spacing={1} justifyContent="center" alignItems="center">
           <div ref={ref} id={identifier}></div>
@@ -107,16 +118,22 @@ const IdeogramView = observer(({ model }: { model: any }) => {
       ) : null}
       {!model.showImportForm &&
       !model.showLoading &&
+      !model.isAnalysisResults &&
       model.orientation === 'vertical' ? (
         <div ref={ref} id={identifier} style={{ paddingTop: '5px' }}></div>
       ) : null}
-      <Typography
-        variant="caption"
-        style={{ paddingLeft: '4px', paddingBottom: '4px' }}
-      >
-        Powered by{' '}
-        <Link href="https://eweitz.github.io/ideogram/">ideogram.js</Link>.
-      </Typography>
+      {model.isAnalysisResults && model.pathways ? (
+        <Pathways model={model} pathways={model.pathways} />
+      ) : null}
+      {!model.isAnalysisResults ? (
+        <Typography
+          variant="caption"
+          style={{ paddingLeft: '4px', paddingBottom: '4px' }}
+        >
+          Powered by{' '}
+          <Link href="https://eweitz.github.io/ideogram/">ideogram.js</Link>.
+        </Typography>
+      ) : null}
     </div>
   )
 })

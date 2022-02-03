@@ -13,14 +13,9 @@ import {
   MenuItem,
   Divider,
   Typography,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   makeStyles,
 } from '@material-ui/core'
 import { regions } from './util'
-import CloseIcon from '@material-ui/icons/Close'
 
 import { generateAnnotations } from './AnnotationsAdapter'
 
@@ -87,12 +82,12 @@ const ImportForm = observer(({ model }: { model: any }) => {
   const { assemblyNames } = session
   const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
-  const [checked, setChecked] = useState(false)
+  const [checked, setChecked] = useState(model.withReactome)
 
   async function populateAnnotations() {
     if (model.annotationsLocation) {
       model.setShowLoading(true)
-      const { widget, ideo, res } = await generateAnnotations(
+      const { widget, ideo, pathways, res } = await generateAnnotations(
         model.annotationsLocation,
         model.withReactome,
       )
@@ -102,16 +97,19 @@ const ImportForm = observer(({ model }: { model: any }) => {
         model.setIdeoAnnotations(ideo)
       }
 
+      if (model.withReactome) {
+        session.addView('IdeogramView', {})
+        const xView = session.views.length - 1
+        // @ts-ignore
+        session.views[xView].setDisplayName('Reactome Analysis Results')
+        // @ts-ignore
+        session.views[xView].setPathways(pathways)
+        // @ts-ignore
+        session.views[xView].setIsAnalysisResults(true)
+      }
+
       if (!res.success) {
-        session.queueDialog((doneCallback: Function) => [
-          ErrorDialogue,
-          {
-            res,
-            handleClose: () => {
-              doneCallback()
-            },
-          },
-        ])
+        session.notify(res.message, 'warning')
       }
     }
   }
@@ -131,6 +129,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setAssembly(assembly)
     await populateAnnotations()
     model.setShowImportForm(false)
+    model.setShowLoading(false)
   }
 
   const handleReactomeAnalysis = (event: any) => {
@@ -225,32 +224,5 @@ const ImportForm = observer(({ model }: { model: any }) => {
     </div>
   )
 })
-
-function ErrorDialogue({
-  res,
-  handleClose,
-}: {
-  res: any
-  handleClose: () => void
-}) {
-  const classes = useStyles()
-
-  return (
-    <Dialog open onClose={handleClose} maxWidth="sm">
-      <DialogTitle>
-        There are some problems with your annotations file
-        <IconButton
-          className={classes.closeButton}
-          onClick={() => handleClose()}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Typography variant="body1">{res.message}</Typography>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default ImportForm

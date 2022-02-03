@@ -27,6 +27,7 @@ export async function generateAnnotations(
 ) {
   const ideo: any = []
   const widget: any = []
+  let reactomePathways: any = undefined
   res = {
     success: true,
     occurances: [],
@@ -52,10 +53,9 @@ export async function generateAnnotations(
     }
     let pathways: any = undefined
     if (withReactome) {
+      reactomePathways = await fetchPathways(checkFile(lines, columns))
       // makes the request to reactome to get all the pathways related to the annotated genes, and converts it to a dictionary for easy lookup
-      pathways = reactomeToDictionary(
-        await fetchPathways(checkFile(lines, columns)),
-      )
+      pathways = reactomeToDictionary(reactomePathways)
     }
 
     if (!columns.includes('name')) {
@@ -71,7 +71,8 @@ export async function generateAnnotations(
     console.log(error)
     setResponseMessage(2)
   }
-  return { widget, ideo, res }
+
+  return { widget, ideo, pathways: reactomePathways?.pathways, res }
 }
 
 function checkFile(lines: any, columns: any) {
@@ -134,7 +135,7 @@ function setResponseMessage(error: number) {
   // missing location data
   if (error === 1) {
     res.message =
-      'There are datapoints missing location data and they will be ommitted from the annotations.'
+      'There are datapoints missing location data and they will be omitted from the annotations.'
     res.type = 1
   }
   // missing required headers in tsv
@@ -145,7 +146,7 @@ function setResponseMessage(error: number) {
   // missing location data and the gene names could not be found within the reference file
   if (error === 3) {
     res.message =
-      'Some provided gene ids could not be coordinated with a location and they will be ommitted from the annotations.'
+      'Some provided gene ids could not be coordinated with a location and they will be omitted from the annotations.'
     res.type = 3
   }
 }
@@ -230,6 +231,7 @@ function parseLine(
   let annot: any = { details: {} }
   let named = false // prioritize naming a gene based on geneSymbol
   let hasLoc = false
+  let hasColor = false
   line.split('\t').forEach((property: string, i: number) => {
     if (property) {
       const camelProp = camelize(columns[i])
@@ -261,14 +263,21 @@ function parseLine(
         const b = '#FF0000' // red
         if (property === '1') {
           annot['color'] = a
+          annot['prevColor'] = a
         } else {
           annot['color'] = b
+          annot['prevColor'] = b
         }
+        hasColor = true
       }
       annot['details'][camelProp] = property
     }
   })
 
+  if (hasColor === false) {
+    annot['color'] = '#FF0000'
+    annot['prevColor'] = '#FF0000'
+  }
   if (hasLoc === false) {
     if (dictionary[annot['name']]) {
       annot['chr'] = dictionary[annot['name']]['chr']
