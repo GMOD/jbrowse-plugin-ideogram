@@ -25,7 +25,7 @@ yarn start
 
 Then open JBrowse Web to (assuming it is running on port 3000):
 
-http://localhost:3000/?config=http://localhost:9000/config.json
+http://localhost:3000/?config=http://localhost:9080/config.json
 
 #### Demo
 
