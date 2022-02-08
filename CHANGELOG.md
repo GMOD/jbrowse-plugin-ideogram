@@ -1,3 +1,9 @@
+# v1.2.1
+
+- updated annotated widget information to have hierarchy of pathway information
+- updated synchronization between reactome pathway table and its coordinating ideogram view
+- updated UI to guide user action better based on their workflow
+
 # v1.2.0
 
 - added ability to enhance annotations with reactome pathway data

@@ -204,18 +204,23 @@ export default function IdeogramView(pluginManager: PluginManager) {
             label: 'Show annotations',
             icon: HourglassIcon,
             type: 'checkbox',
-            checked: self.showAnnotations === true,
+            checked:
+              self.showAnnotations === true &&
+              self.ideoAnnotations !== undefined,
             disabled:
               (self.widgetAnnotations === undefined &&
                 self.isAnalysisResults === true) ||
-              self.showImportForm === true,
+              self.showImportForm === true ||
+              self.ideoAnnotations === undefined,
             onClick: () => self.toggleAnnotations(),
           },
           {
             label: 'Refresh Analysis Results Table',
             icon: TableChartIcon,
             disabled:
-              self.isAnalysisResults === true || self.showImportForm === true,
+              self.isAnalysisResults === true ||
+              self.showImportForm === true ||
+              self.withReactome === false,
             onClick: () => self.refreshTable(),
           },
         ]
