@@ -16,7 +16,9 @@ import {
   makeStyles,
 } from '@material-ui/core'
 import { navToAnnotation } from '../util'
-import Pathways from '../Pathways'
+import { TreeView, TreeItem } from '@material-ui/lab'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 
 const useStyles = makeStyles(() => ({
   table: {
@@ -133,6 +135,44 @@ function NavLink(props: any) {
   )
 }
 
+function Hierarchy(props: any) {
+  const { hierarchy } = props
+  const classes = useStyles()
+
+  const renderTree = (nodes: any) => (
+    <TreeItem
+      key={nodes.stId}
+      nodeId={nodes.stId}
+      label={
+        <Link
+          className={classes.link}
+          target="_blank"
+          rel="noopener"
+          href={`https://idg.reactome.org/PathwayBrowser/#/${nodes.stId}&FLG=${nodes.name}`}
+          underline="always"
+        >
+          {nodes.name}
+        </Link>
+      }
+    >
+      {Array.isArray(nodes.children)
+        ? nodes.children.map((node: any) => renderTree(node))
+        : null}
+    </TreeItem>
+  )
+
+  return (
+    <BaseCard title="Reactome Annotated Pathways">
+      <TreeView
+        defaultCollapseIcon={<ExpandMoreIcon />}
+        defaultExpandIcon={<ChevronRightIcon />}
+      >
+        {hierarchy.map((node: any) => renderTree(node))}
+      </TreeView>
+    </BaseCard>
+  )
+}
+
 function IdeoFeatureDetails(props: any) {
   const { model } = props
   const feat = model.featureData
@@ -148,16 +188,20 @@ function IdeoFeatureDetails(props: any) {
       <FeatureDetails
         feature={fullFeature}
         {...props}
-        omit={['synonyms', 'externalLinks', 'pathways', 'reactomeIds']}
+        omit={[
+          'synonyms',
+          'externalLinks',
+          'pathways',
+          'reactomeIds',
+          'hierarchy',
+        ]}
       />
       <NavLink feature={fullFeature} model={model}></NavLink>
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
-      {fullFeature.pathways &&
-        !fullFeature.pathways.includes(undefined) &&
-        fullFeature.pathways.length > 0 && (
-          <Pathways model={model} pathways={fullFeature.pathways} />
-        )}
+      {fullFeature.hierarchy.length > 0 && (
+        <Hierarchy hierarchy={fullFeature.hierarchy} />
+      )}
     </Paper>
   )
 }

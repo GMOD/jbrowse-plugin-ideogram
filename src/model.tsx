@@ -6,6 +6,8 @@ import PluginManager from '@jbrowse/core/PluginManager'
 import { AlignHorizontalLeftIcon, HourglassIcon, MaleIcon } from './Icons'
 import FolderOpenIcon from '@material-ui/icons/FolderOpen'
 import { FileLocation } from '@jbrowse/core/util/types'
+import TableChartIcon from '@material-ui/icons/TableChart'
+import { getSession } from '@jbrowse/core/util'
 
 export default function IdeogramView(pluginManager: PluginManager) {
   return types
@@ -20,6 +22,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
       region: '1',
       assembly: 'hg38',
       selectedAnnot: '',
+      ideogramId: '',
 
       // display options
       allRegions: false,
@@ -92,6 +95,9 @@ export default function IdeogramView(pluginManager: PluginManager) {
         self.highlightedAnnots = arr
         this.applyHighlighting()
       },
+      setIdeogramId(id: string) {
+        self.ideogramId = id
+      },
       applyHighlighting() {
         // @ts-ignore
         self.ideoAnnotations.filter((annot: any) => {
@@ -132,6 +138,30 @@ export default function IdeogramView(pluginManager: PluginManager) {
       toggleAnnotations() {
         self.showAnnotations = !self.showAnnotations
       },
+      refreshTable() {
+        const session = getSession(self)
+        let isActive = false
+        session.views.forEach((view: any) => {
+          if (view?.isAnalysisResults) isActive = true
+        })
+        if (!isActive) {
+          session.addView('IdeogramView', {})
+          const xView = session.views.length - 1
+          // @ts-ignore
+          session.views[xView].setDisplayName('Reactome Analysis Results')
+          // @ts-ignore
+          session.views[xView].setPathways(self.pathways)
+          // @ts-ignore
+          session.views[xView].setIsAnalysisResults(true)
+          // @ts-ignore
+          session.views[xView].setIdeogramId(self.ideogramId)
+        } else {
+          session.notify(
+            'The analysis results table is already displayed.',
+            'info',
+          )
+        }
+      },
     }))
     .views(self => ({
       menuItems(): MenuItem[] {
@@ -139,6 +169,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
           {
             label: 'Return to import form',
             icon: FolderOpenIcon,
+            disabled: self.isAnalysisResults === true,
             onClick: () => self.setShowImportForm(true),
           },
           {
@@ -146,13 +177,17 @@ export default function IdeogramView(pluginManager: PluginManager) {
             icon: VisibilityIcon,
             type: 'checkbox',
             checked: self.allRegions === true,
+            disabled:
+              self.isAnalysisResults === true || self.showImportForm === true,
             onClick: () => self.toggleAllRegions(!self.allRegions),
           },
           {
             label: 'Horizontal Display',
             icon: AlignHorizontalLeftIcon,
             type: 'checkbox',
-            disabled: self.allRegions === false,
+            disabled:
+              (self.allRegions === false && self.isAnalysisResults === true) ||
+              self.showImportForm === true,
             checked: self.orientation === 'horizontal',
             onClick: () => self.toggleOrientation(),
           },
@@ -161,6 +196,8 @@ export default function IdeogramView(pluginManager: PluginManager) {
             icon: MaleIcon,
             type: 'checkbox',
             checked: self.sex === 'male',
+            disabled:
+              self.isAnalysisResults === true || self.showImportForm === true,
             onClick: () => self.toggleSex(),
           },
           {
@@ -168,8 +205,18 @@ export default function IdeogramView(pluginManager: PluginManager) {
             icon: HourglassIcon,
             type: 'checkbox',
             checked: self.showAnnotations === true,
-            disabled: self.widgetAnnotations === undefined,
+            disabled:
+              (self.widgetAnnotations === undefined &&
+                self.isAnalysisResults === true) ||
+              self.showImportForm === true,
             onClick: () => self.toggleAnnotations(),
+          },
+          {
+            label: 'Refresh Analysis Results Table',
+            icon: TableChartIcon,
+            disabled:
+              self.isAnalysisResults === true || self.showImportForm === true,
+            onClick: () => self.refreshTable(),
           },
         ]
         return menuItems

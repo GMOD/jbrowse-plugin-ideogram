@@ -59,16 +59,16 @@ export async function generateAnnotations(
     }
 
     if (!columns.includes('name')) {
-      console.log(columns)
       setResponseMessage(2)
     } else {
-      lines.forEach((line: string) => {
+      lines.forEach(async (line: string) => {
         ideo.push(parseLine(line, columns, dictionary, pathways))
-        widget.push(widgetfy(parseLine(line, columns, dictionary, pathways)))
+        widget.push(
+          await widgetfy(parseLine(line, columns, dictionary, pathways)),
+        )
       })
     }
   } catch (error) {
-    console.log(error)
     setResponseMessage(2)
   }
 
@@ -130,6 +130,19 @@ async function fetchPathways(body: any) {
   return response.json()
 }
 
+async function fetchHierarchy(geneName: string) {
+  const response = await fetch(
+    `https://idg.reactome.org/idgpairwise/relationships/hierarchyForTerm/${geneName}`,
+    {
+      method: 'GET',
+    },
+  )
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${response.status} ${response.statusText}`)
+  }
+  return response.json()
+}
+
 function setResponseMessage(error: number) {
   res.success = false
   // missing location data
@@ -156,12 +169,20 @@ function setResponseMessage(error: number) {
  *   this would have 'end' instead of 'stop' and not contain the stop, color, and chr properties
  * @param obj - the parsed object from the file
  */
-function widgetfy(obj: any) {
+async function widgetfy(obj: any) {
   const newObj = obj
   newObj['end'] = newObj.stop
   delete newObj.stop
   delete newObj.color
   delete newObj.chr
+
+  if (obj.details.reactomeIds) {
+    const response = await fetchHierarchy(obj.name)
+
+    if (response.hierarchy) {
+      newObj.details.hierarchy = response.hierarchy
+    }
+  }
 
   return newObj
 }

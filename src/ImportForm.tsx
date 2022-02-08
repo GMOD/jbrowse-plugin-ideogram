@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { observer } from 'mobx-react'
+import { v4 as uuidv4 } from 'uuid'
 import AssemblySelector from '@jbrowse/core/ui/AssemblySelector'
 import { FileSelector } from '@jbrowse/core/ui'
 import { getSession } from '@jbrowse/core/util'
@@ -104,8 +105,11 @@ const ImportForm = observer(({ model }: { model: any }) => {
         session.views[xView].setDisplayName('Reactome Analysis Results')
         // @ts-ignore
         session.views[xView].setPathways(pathways)
+        model.setPathways(pathways)
         // @ts-ignore
         session.views[xView].setIsAnalysisResults(true)
+        // @ts-ignore
+        session.views[xView].setIdeogramId(model.ideogramId)
       }
 
       if (!res.success) {
@@ -120,6 +124,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setOrientation('horizontal')
     model.setAllRegions(false)
     model.setShowImportForm(false)
+    model.setIdeogramId(uuidv4())
     await populateAnnotations()
     model.setShowLoading(false)
   }
@@ -127,6 +132,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
   async function handleOpenAllRegions(assembly: string) {
     model.setAllRegions(true)
     model.setAssembly(assembly)
+    model.setIdeogramId(uuidv4())
     await populateAnnotations()
     model.setShowImportForm(false)
     model.setShowLoading(false)

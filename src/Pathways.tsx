@@ -42,7 +42,12 @@ function Pathways(props: any) {
     const session = getSession(model)
     session.views.forEach((sessionModel: any, i: number) => {
       if (sessionModel === model) {
-        const targetModel = session.views[i - 1]
+        const targetModel = session.views.filter((view: any) => {
+          return (
+            view?.ideogramId === sessionModel?.ideogramId &&
+            view !== sessionModel
+          )
+        })[0]
         // @ts-ignore
         targetModel.ideoAnnotations.forEach((annot: any) => {
           if (annot.details.reactomeIds?.includes(pathway.stId)) {
