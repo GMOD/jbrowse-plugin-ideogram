@@ -66,6 +66,37 @@ export const tierLegend = [
   },
 ]
 
+export async function openReactomeView(
+  pwId: string,
+  pathways: any,
+  pwName: string,
+  geneName: string,
+  model: IdeogramViewModel,
+) {
+  const session = getSession(model)
+  const rv = session.views.find(view => view.type === 'ReactomeView') as any
+
+  if (rv) {
+    rv.setPathways(pathways)
+    rv.setSelectedPathway(pwId)
+    rv.setGene(geneName)
+    rv.setMessage(
+      `Pathways relating to ${geneName} are being displayed. "${pwName}" has been selected.`,
+    )
+  } else {
+    const view = session.addView('ReactomeView', {
+      displayName: 'Reactome View',
+    }) as any
+    view.setPathways(pathways)
+    view.setSelectedPathway(pwId)
+    view.setGene(geneName)
+    view.setMessage(
+      `Pathways relating to ${geneName} are being displayed. "${pwName}" has been selected.`,
+    )
+    await when(() => view.initialized)
+  }
+}
+
 export async function navToAnnotation(
   locString: string,
   model: IdeogramViewModel,

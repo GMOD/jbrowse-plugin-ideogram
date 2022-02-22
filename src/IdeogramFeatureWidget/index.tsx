@@ -4,14 +4,16 @@ import { ElementId } from '@jbrowse/core/util/types/mst'
 import { types } from 'mobx-state-tree'
 import ReactComponent from './IdeogramFeatureWidget'
 
-export default (_: PluginManager) => {
+export default (pluginManager: PluginManager) => {
   const configSchema = ConfigurationSchema('IdeogramFeatureWidget', {})
   const stateModel = types
     .model('IdeogramFeatureWidget', {
       id: ElementId,
       type: types.literal('IdeogramFeatureWidget'),
       featureData: types.frozen({}),
-      view: types.safeReference(_.pluggableMstType('view', 'stateModel')),
+      view: types.safeReference(
+        pluginManager.pluggableMstType('view', 'stateModel'),
+      ),
     })
     .actions(self => ({
       setFeatureData(data: any) {
@@ -19,6 +21,9 @@ export default (_: PluginManager) => {
       },
       clearFeatureData() {
         self.featureData = {}
+      },
+      hasPlugin(name: string) {
+        return pluginManager.hasPlugin(name)
       },
     }))
 

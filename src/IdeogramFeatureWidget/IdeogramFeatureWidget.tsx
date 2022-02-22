@@ -13,12 +13,15 @@ import {
   Link,
   Chip,
   Button,
+  IconButton,
+  Tooltip,
   makeStyles,
 } from '@material-ui/core'
-import { navToAnnotation } from '../util'
+import { navToAnnotation, openReactomeView } from '../util'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import MenuOpenIcon from '@material-ui/icons/MenuOpen'
 
 const useStyles = makeStyles(() => ({
   table: {
@@ -135,24 +138,52 @@ function NavLink(props: any) {
   )
 }
 
-function Hierarchy(props: any) {
-  const { hierarchy } = props
+function ReactomeItem(props: any) {
+  const { node, model, pathways, geneName } = props
   const classes = useStyles()
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Link
+        className={classes.link}
+        target="_blank"
+        rel="noopener"
+        href={`https://idg.reactome.org/PathwayBrowser/#/${node.stId}&FLG=${node.name}`}
+        underline="always"
+      >
+        {node.name}
+      </Link>
+      {model.hasPlugin('ReactomePlugin') ? (
+        <Tooltip title="Open pathway in Reactome Plugin">
+          <IconButton
+            color="primary"
+            component="span"
+            onClick={() => {
+              openReactomeView(node.stId, pathways, node.name, geneName, model)
+            }}
+          >
+            <MenuOpenIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
+    </div>
+  )
+}
+
+function Hierarchy(props: any) {
+  const { hierarchy, model, pathways, geneName } = props
 
   const renderTree = (nodes: any) => (
     <TreeItem
       key={nodes.stId}
       nodeId={nodes.stId}
       label={
-        <Link
-          className={classes.link}
-          target="_blank"
-          rel="noopener"
-          href={`https://idg.reactome.org/PathwayBrowser/#/${nodes.stId}&FLG=${nodes.name}`}
-          underline="always"
-        >
-          {nodes.name}
-        </Link>
+        <ReactomeItem
+          node={nodes}
+          model={model}
+          pathways={pathways}
+          geneName={geneName}
+        />
       }
     >
       {Array.isArray(nodes.children)
@@ -200,7 +231,12 @@ function IdeoFeatureDetails(props: any) {
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
       {fullFeature.hierarchy.length > 0 && (
-        <Hierarchy hierarchy={fullFeature.hierarchy} />
+        <Hierarchy
+          hierarchy={fullFeature.hierarchy}
+          model={model}
+          pathways={fullFeature.pathways}
+          geneName={fullFeature.name}
+        />
       )}
     </Paper>
   )
