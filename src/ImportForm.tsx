@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { Suspense, useState } from 'react'
 import { observer } from 'mobx-react'
 import { v4 as uuidv4 } from 'uuid'
 import AssemblySelector from '@jbrowse/core/ui/AssemblySelector'
@@ -12,11 +12,14 @@ import {
   FormControlLabel,
   TextField,
   MenuItem,
+  IconButton,
   Divider,
   Typography,
   makeStyles,
 } from '@material-ui/core'
 import { regions } from './util'
+import HelpIcon from '@material-ui/icons/Help'
+import HelpDialog from './HelpDialog'
 
 import { generateAnnotations } from './AnnotationsAdapter'
 
@@ -84,6 +87,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
   const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
   const [checked, setChecked] = useState(model.withReactome)
+  const [isHelpDialogDisplayed, setHelpDialogDisplayed] = useState(false)
 
   async function populateAnnotations() {
     if (model.annotationsLocation) {
@@ -205,6 +209,9 @@ const ImportForm = observer(({ model }: { model: any }) => {
           <Typography variant="body2">
             <b>Optional:</b> provide a .tsv file of gene annotations for the
             ideogram.
+            <IconButton onClick={() => setHelpDialogDisplayed(true)}>
+              <HelpIcon />
+            </IconButton>
           </Typography>
           <Grid item>
             <FileSelector
@@ -227,6 +234,11 @@ const ImportForm = observer(({ model }: { model: any }) => {
           </Grid>
         </Grid>
       </Container>
+      {isHelpDialogDisplayed ? (
+        <Suspense fallback={<div />}>
+          <HelpDialog handleClose={() => setHelpDialogDisplayed(false)} />
+        </Suspense>
+      ) : null}
     </div>
   )
 })
