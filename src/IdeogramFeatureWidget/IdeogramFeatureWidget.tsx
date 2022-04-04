@@ -148,7 +148,7 @@ function ReactomeItem(props: any) {
         className={classes.link}
         target="_blank"
         rel="noopener"
-        href={`https://idg.reactome.org/PathwayBrowser/#/${node.stId}&FLG=${node.name}`}
+        href={`https://reactome.org/PathwayBrowser/#/${node.stId}&FLG=${node.name}`}
         underline="always"
       >
         {node.name}
@@ -230,7 +230,7 @@ function IdeoFeatureDetails(props: any) {
       <NavLink feature={fullFeature} model={model}></NavLink>
       {fullFeature.externalLinks && <ExternalLinks feature={fullFeature} />}
       {fullFeature.synonyms && <Synonyms feature={fullFeature} />}
-      {fullFeature.hierarchy.length > 0 && (
+      {fullFeature.hierarchy?.length > 0 && (
         <Hierarchy
           hierarchy={fullFeature.hierarchy}
           model={model}
