@@ -17,11 +17,9 @@ import {
   Typography,
   makeStyles,
 } from '@material-ui/core'
-import { regions } from './util'
+import { regions, populateAnnotations } from './util'
 import HelpIcon from '@material-ui/icons/Help'
 import HelpDialog from './HelpDialog'
-
-import { generateAnnotations } from './AnnotationsAdapter'
 
 const useStyles = makeStyles(theme => ({
   importFormContainer: {
@@ -89,39 +87,6 @@ const ImportForm = observer(({ model }: { model: any }) => {
   const [checked, setChecked] = useState(model.withReactome)
   const [isHelpDialogDisplayed, setHelpDialogDisplayed] = useState(false)
 
-  async function populateAnnotations() {
-    if (model.annotationsLocation) {
-      model.setShowLoading(true)
-      const { widget, ideo, pathways, res } = await generateAnnotations(
-        model.annotationsLocation,
-        model.withReactome,
-      )
-
-      if (res.type !== 2) {
-        model.setWidgetAnnotations(widget)
-        model.setIdeoAnnotations(ideo)
-      }
-
-      if (model.withReactome) {
-        session.addView('IdeogramView', {})
-        const xView = session.views.length - 1
-        // @ts-ignore
-        session.views[xView].setDisplayName('Reactome Analysis Results')
-        // @ts-ignore
-        session.views[xView].setPathways(pathways)
-        model.setPathways(pathways)
-        // @ts-ignore
-        session.views[xView].setIsAnalysisResults(true)
-        // @ts-ignore
-        session.views[xView].setIdeogramId(model.ideogramId)
-      }
-
-      if (!res.success) {
-        session.notify(res.message, 'warning')
-      }
-    }
-  }
-
   async function handleOpen(assembly: string, region: string) {
     model.setAssembly(assembly)
     model.setRegion(region)
@@ -129,7 +94,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setAllRegions(false)
     model.setShowImportForm(false)
     model.setIdeogramId(uuidv4())
-    await populateAnnotations()
+    await populateAnnotations(model)
     model.setShowLoading(false)
   }
 
@@ -137,7 +102,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
     model.setAllRegions(true)
     model.setAssembly(assembly)
     model.setIdeogramId(uuidv4())
-    await populateAnnotations()
+    await populateAnnotations(model)
     model.setShowImportForm(false)
     model.setShowLoading(false)
   }

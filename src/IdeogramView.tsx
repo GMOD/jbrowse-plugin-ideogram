@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo } from 'react'
 import { observer } from 'mobx-react'
 import Ideogram from 'ideogram'
 import ImportForm from './ImportForm'
-import { allChromosomes, tierLegend } from './util'
+import { allChromosomes, tierLegend, populateAnnotations } from './util'
 import { Grid, Typography, Link } from '@material-ui/core'
 import { getSession } from '@jbrowse/core/util'
 import PulseLoader from 'react-spinners/PulseLoader'
@@ -87,6 +87,21 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     model.selectedAnnot,
     model.highlightedAnnots,
   ])
+
+  useEffect(() => {
+    const annotate = async () => {
+      await populateAnnotations(model)
+      model.setShowLoading(false)
+    }
+    console.log(
+      'annotate',
+      !model.ideoAnnotations && !model.showImportForm,
+      model.withReactome,
+    )
+    if (!model.ideoAnnotations && !model.showImportForm) {
+      annotate().catch(console.error)
+    }
+  }, [model.annotationsLocation, model.withReactome])
 
   return (
     <div>

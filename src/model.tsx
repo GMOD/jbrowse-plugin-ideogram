@@ -31,9 +31,13 @@ export default function IdeogramView(pluginManager: PluginManager) {
       withReactome: false,
       showLoading: false,
       isAnalysisResults: false,
+
+      annotationsLocation: types.optional(types.frozen(), {
+        uri: '',
+        locationType: 'UriLocation',
+      }),
     })
     .volatile(() => ({
-      annotationsLocation: (undefined as unknown) as FileLocation,
       widgetAnnotations: (undefined as unknown) as object,
       ideoAnnotations: (undefined as unknown) as object,
       pathways: (undefined as unknown) as object,
@@ -69,10 +73,10 @@ export default function IdeogramView(pluginManager: PluginManager) {
       setAnnotationsLocation(loc: FileLocation) {
         self.annotationsLocation = loc
       },
-      setWidgetAnnotations(obj: object) {
+      setWidgetAnnotations(obj: any) {
         self.widgetAnnotations = obj
       },
-      setIdeoAnnotations(obj: object) {
+      setIdeoAnnotations(obj: any) {
         self.ideoAnnotations = obj
       },
       setWithReactome(toggle: boolean) {
@@ -81,7 +85,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
       setShowLoading(toggle: boolean) {
         self.showLoading = toggle
       },
-      setPathways(obj: object) {
+      setPathways(obj: any) {
         self.pathways = obj
       },
       setIsAnalysisResults(toggle: boolean) {
@@ -91,7 +95,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
         self.selectedAnnot = item
         this.applyHighlighting()
       },
-      setHighlightedAnnots(arr: Array<object>) {
+      setHighlightedAnnots(arr: any) {
         self.highlightedAnnots = arr
         this.applyHighlighting()
       },

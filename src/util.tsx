@@ -1,6 +1,7 @@
 import { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 import { getSession, parseLocString, when } from '@jbrowse/core/util'
 import { IdeogramViewModel } from './model'
+import { generateAnnotations } from './AnnotationsAdapter'
 
 export const regions = [
   'chr1',
@@ -145,6 +146,41 @@ export async function navToAnnotation(
       } catch (e) {
         session.notify(`${e}`, 'error')
       }
+    }
+  }
+}
+
+export async function populateAnnotations(model: any) {
+  const session = getSession(model)
+
+  if (model.annotationsLocation) {
+    model.setShowLoading(true)
+    const { widget, ideo, pathways, res } = await generateAnnotations(
+      model.annotationsLocation,
+      model.withReactome,
+    )
+
+    if (res.type !== 2) {
+      model.setWidgetAnnotations(widget)
+      model.setIdeoAnnotations(ideo)
+    }
+
+    if (model.withReactome) {
+      session.addView('IdeogramView', {})
+      const xView = session.views.length - 1
+      // @ts-ignore
+      session.views[xView].setDisplayName('Reactome Analysis Results')
+      // @ts-ignore
+      session.views[xView].setPathways(pathways)
+      model.setPathways(pathways)
+      // @ts-ignore
+      session.views[xView].setIsAnalysisResults(true)
+      // @ts-ignore
+      session.views[xView].setIdeogramId(model.ideogramId)
+    }
+
+    if (!res.success) {
+      session.notify(res.message, 'warning')
     }
   }
 }
