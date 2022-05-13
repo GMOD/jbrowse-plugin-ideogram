@@ -166,6 +166,18 @@ export async function populateAnnotations(model: any) {
     }
 
     if (model.withReactome) {
+      let isActive = false
+      session.views.forEach((view: any) => {
+        if (view?.isAnalysisResults) isActive = true
+      })
+
+      const tview = session.views.find(
+        (view: any) =>
+          view?.isAnalysisResults && view.ideogramId === model.ideogramId,
+      )
+      if (tview) {
+        session.removeView(tview)
+      }
       session.addView('IdeogramView', {})
       const xView = session.views.length - 1
       // @ts-ignore
