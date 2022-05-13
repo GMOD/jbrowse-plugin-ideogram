@@ -93,11 +93,6 @@ const IdeogramView = observer(({ model }: { model: any }) => {
       await populateAnnotations(model)
       model.setShowLoading(false)
     }
-    console.log(
-      'annotate',
-      !model.ideoAnnotations && !model.showImportForm,
-      model.withReactome,
-    )
     if (!model.ideoAnnotations && !model.showImportForm) {
       annotate().catch(console.error)
     }
