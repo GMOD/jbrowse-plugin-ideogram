@@ -4,10 +4,14 @@ import WidgetType from '@jbrowse/core/pluggableElementTypes/WidgetType'
 import { isAbstractMenuManager } from '@jbrowse/core/util'
 import PauseIcon from '@mui/icons-material/Pause'
 
-import { version } from '../package.json'
 import IdeogramFeatureWidgetF from './IdeogramFeatureWidget'
 import IdeogramView from './IdeogramView'
 import stateModelFactory from './model'
+// The generated src/version.ts, as in jbrowse-plugin-gwas, rather than
+// ../package.json. The `version` npm script writes this file on every
+// `npm version`, and importing the manifest instead inlines the whole thing
+// (every dependency range included) into the bundle to read one string.
+import { version } from './version'
 
 import type PluginManager from '@jbrowse/core/PluginManager'
 import type { SessionWithWidgets} from '@jbrowse/core/util'
