@@ -56,6 +56,14 @@ export default defineConfig(
         },
       ],
       'no-underscore-dangle': 'off',
+      // `interface XModel extends Instance<XStateModel> {}` is the required
+      // shape for an MST model's instance type (the `type X = Instance<…>`
+      // alias makes the factory's inferred type self-referential), so an
+      // interface whose whole job is to extend one supertype has to be legal.
+      '@typescript-eslint/no-empty-object-type': [
+        'error',
+        { allowInterfaces: 'with-single-extends' },
+      ],
       curly: 'error',
       'object-shorthand': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'error',

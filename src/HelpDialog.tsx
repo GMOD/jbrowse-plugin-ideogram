@@ -1,50 +1,31 @@
 import React from 'react'
 
-import CloseIcon from '@mui/icons-material/Close'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-} from '@mui/material'
-import { makeStyles } from 'tss-react/mui'
-
-export const useStyles = makeStyles()(theme => ({
-  closeButton: {
-    position: 'absolute',
-    right: theme.spacing(1),
-    top: theme.spacing(1),
-    color: theme.palette.grey[500],
-  },
-}))
+import { Dialog } from '@jbrowse/core/ui'
+import { Button, DialogActions, DialogContent, Divider } from '@mui/material'
 
 /**
- * NOTE: Help Dialog logic and display retrieved from GMOD/jbrowse-components:plugins/linear-genome-view/src/LinearGenomeView/components/HelpDialog.tsx
+ * Core's Dialog rather than MUI's: it supplies the title bar, the close button
+ * and the divider under them, so the hand-rolled versions of all three are gone
+ * along with the absolute-positioned closeButton style they needed. It also
+ * puts the dialog on JBrowse's own theme and error boundary.
+ *
+ * Imported from the `@jbrowse/core/ui` barrel, NOT `@jbrowse/core/ui/Dialog`.
+ * Only the barrel is in ReExports/list.ts, so the deep path is not externalized
+ * and bundles a second copy of Dialog and everything it reaches (dompurify by
+ * way of SanitizedHTML, the error boundary, the dialog theme): 68kB, measured.
  */
 export default function HelpDialog({
   handleClose,
 }: {
   handleClose: () => void
 }) {
-  const { classes } = useStyles()
   return (
-    <Dialog open maxWidth="xl" onClose={handleClose}>
-      <DialogTitle>
-        How to use annotations files
-        <IconButton
-          data-testid="close-resultsDialog"
-          className={classes.closeButton}
-          onClick={() => {
-            handleClose()
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <Divider />
+    <Dialog
+      open
+      maxWidth="xl"
+      onClose={handleClose}
+      title="How to use annotations files"
+    >
       <DialogContent>
         <h3>General</h3>
         <ul>

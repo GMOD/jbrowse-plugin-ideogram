@@ -12,6 +12,23 @@ import type { MenuItem } from '@jbrowse/core/ui'
 import type { FileLocation } from '@jbrowse/core/util/types'
 import type { Instance } from '@jbrowse/mobx-state-tree'
 
+/**
+ * One pathway from Reactome's AnalysisService, narrowed to the fields the
+ * pathways table and the hierarchy actually read.
+ */
+export interface ReactomePathway {
+  stId: string
+  name: string
+  entities: {
+    found: number
+    total: number
+    ratio: number
+    pValue: number
+    fdr: number
+  }
+  reactions: { found: number; total: number; ratio: number }
+}
+
 export default function IdeogramView(_pluginManager: PluginManager) {
   return types
     .model('IdeogramView', {
@@ -39,6 +56,12 @@ export default function IdeogramView(_pluginManager: PluginManager) {
         uri: '',
         locationType: 'UriLocation',
       }),
+
+      // A model prop rather than volatile so the analysis-results view is
+      // describable as data: `addView('IdeogramView', {isAnalysisResults: true,
+      // pathways})` is the whole of it, with no follow-up actions, and a shared
+      // session comes back with its results table populated instead of empty.
+      pathways: types.frozen<ReactomePathway[] | undefined>(undefined),
     })
     // These start out undefined and the code below already checks for that, so
     // say so in the type. The `undefined as unknown as object` double-cast that
@@ -47,7 +70,6 @@ export default function IdeogramView(_pluginManager: PluginManager) {
     .volatile(() => ({
       widgetAnnotations: undefined as object | undefined,
       ideoAnnotations: undefined as object | undefined,
-      pathways: undefined as object | undefined,
       highlightedAnnots: undefined as object[] | undefined,
     }))
     .actions(self => ({
@@ -92,7 +114,7 @@ export default function IdeogramView(_pluginManager: PluginManager) {
       setShowLoading(toggle: boolean) {
         self.showLoading = toggle
       },
-      setPathways(obj: any) {
+      setPathways(obj: ReactomePathway[] | undefined) {
         self.pathways = obj
       },
       setIsAnalysisResults(toggle: boolean) {
@@ -155,16 +177,16 @@ export default function IdeogramView(_pluginManager: PluginManager) {
           (view: any) => view?.isAnalysisResults,
         )
         if (!isActive) {
-          session.addView('IdeogramView', {})
-          const xView = session.views.length - 1
-          // @ts-ignore
-          session.views[xView].setDisplayName('Reactome Analysis Results')
-          // @ts-ignore
-          session.views[xView].setPathways(self.pathways)
-          // @ts-ignore
-          session.views[xView].setIsAnalysisResults(true)
-          // @ts-ignore
-          session.views[xView].setIdeogramId(self.ideogramId)
+          // The view is described by its initial snapshot rather than built
+          // empty and then driven through four setters. Nothing reads the
+          // return value, so this needs neither a cast nor the ts-ignore per
+          // call that reaching back through session.views[length - 1] did.
+          session.addView('IdeogramView', {
+            displayName: 'Reactome Analysis Results',
+            isAnalysisResults: true,
+            ideogramId: self.ideogramId,
+            pathways: self.pathways,
+          })
         } else {
           session.notify(
             'The analysis results table is already displayed.',
@@ -240,4 +262,8 @@ export default function IdeogramView(_pluginManager: PluginManager) {
 }
 
 export type IdeogramViewStateModel = ReturnType<typeof IdeogramView>
-export type IdeogramViewModel = Instance<IdeogramViewStateModel>
+// interface, not `type X = Instance<…>`: the alias form makes the factory's
+// inferred type self-referential the moment anything the model reaches back
+// mentions the model, which surfaces as TS7023 on the factory and TS2456 here.
+// The interface defers the reference. ADR-055 in jbrowse-components.
+export interface IdeogramViewModel extends Instance<IdeogramViewStateModel> {}

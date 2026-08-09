@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import {
   BaseCard,
@@ -19,8 +19,6 @@ import {
   TableRow,
   Tooltip,
 } from '@mui/material'
-import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
-import { TreeItem } from '@mui/x-tree-view/TreeItem'
 import { observer } from 'mobx-react'
 import { makeStyles } from 'tss-react/mui'
 
@@ -38,6 +36,27 @@ const useStyles = makeStyles()(() => ({
     width: '100%',
     maxHeight: 600,
     overflow: 'auto',
+  },
+  treeList: {
+    listStyle: 'none',
+    margin: 0,
+    paddingLeft: 0,
+  },
+  treeChildren: {
+    listStyle: 'none',
+    margin: 0,
+    // lines up a child's toggle under its parent's label
+    paddingLeft: 28,
+  },
+  treeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+  },
+  // keeps a childless node's label in the same column as a parent's
+  treeToggleSpacer: {
+    display: 'inline-block',
+    width: 28,
   },
 }))
 
@@ -182,40 +201,111 @@ function ReactomeItem(props: any) {
   )
 }
 
-function Hierarchy(props: any) {
-  const { hierarchy, model, pathways, geneName } = props
+/**
+ * A Reactome pathway hierarchy node, as the hierarchyForTerm endpoint returns
+ * it. Only the three fields this tree draws are named.
+ */
+interface HierarchyNode {
+  stId: string
+  name: string
+  children?: HierarchyNode[]
+}
 
-  const renderTree = (nodes: any) => (
-    <TreeItem
-      key={nodes.stId}
-      itemId={nodes.stId}
-      label={
+/**
+ * One collapsible row. Written out here rather than pulled from a tree-view
+ * library: all this needs is a disclosure toggle and a nested list, and
+ * @mui/x-tree-view is not one of the modules JBrowse externalizes, so it was
+ * costing ~55kB of the plugin's own bundle to draw two dozen links.
+ *
+ * Collapsed by default, which is what the previous SimpleTreeView did with no
+ * defaultExpandedItems set.
+ */
+function HierarchyItem({
+  node,
+  model,
+  pathways,
+  geneName,
+}: {
+  node: HierarchyNode
+  model: any
+  pathways: any
+  geneName: string
+}) {
+  const { classes } = useStyles()
+  const [expanded, setExpanded] = useState(false)
+  const children = node.children ?? []
+
+  return (
+    <li>
+      <div className={classes.treeRow}>
+        {children.length > 0 ? (
+          <IconButton
+            size="small"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            onClick={() => {
+              setExpanded(!expanded)
+            }}
+          >
+            {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+          </IconButton>
+        ) : (
+          <span className={classes.treeToggleSpacer} />
+        )}
         <ReactomeItem
-          node={nodes}
+          node={node}
           model={model}
           pathways={pathways}
           geneName={geneName}
         />
-      }
-    >
-      {Array.isArray(nodes.children)
-        ? nodes.children.map((node: any) => renderTree(node))
-        : null}
-    </TreeItem>
+      </div>
+      {expanded && children.length > 0 ? (
+        <ul className={classes.treeChildren}>
+          {children.map(child => (
+            <HierarchyItem
+              key={child.stId}
+              node={child}
+              model={model}
+              pathways={pathways}
+              geneName={geneName}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </li>
   )
+}
+
+function Hierarchy({
+  hierarchy,
+  model,
+  pathways,
+  geneName,
+}: {
+  hierarchy: HierarchyNode[]
+  model: any
+  pathways: any
+  geneName: string
+}) {
+  const { classes } = useStyles()
 
   return (
     <BaseCard title="Reactome Annotated Pathways">
-      <SimpleTreeView
-        slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
-      >
-        {hierarchy.map((node: any) => renderTree(node))}
-      </SimpleTreeView>
+      <ul className={classes.treeList}>
+        {hierarchy.map(node => (
+          <HierarchyItem
+            key={node.stId}
+            node={node}
+            model={model}
+            pathways={pathways}
+            geneName={geneName}
+          />
+        ))}
+      </ul>
     </BaseCard>
   )
 }
 
-function IdeoFeatureDetails(props: any) {
+const IdeoFeatureDetails = observer(function IdeoFeatureDetails(props: any) {
   const { model } = props
   const feat = model.featureData
 
@@ -251,6 +341,6 @@ function IdeoFeatureDetails(props: any) {
       )}
     </Paper>
   )
-}
+})
 
-export default observer(IdeoFeatureDetails)
+export default IdeoFeatureDetails

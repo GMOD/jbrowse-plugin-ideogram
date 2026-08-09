@@ -182,17 +182,16 @@ export async function populateAnnotations(model: any) {
       if (tview) {
         session.removeView(tview)
       }
-      session.addView('IdeogramView', {})
-      const xView = session.views.length - 1
-      // @ts-ignore
-      session.views[xView].setDisplayName('Reactome Analysis Results')
-      // @ts-ignore
-      session.views[xView].setPathways(pathways)
+      // Described by its initial snapshot rather than built empty and then
+      // driven through four setters, which is also what removes the ts-ignore
+      // each of those calls needed.
+      session.addView('IdeogramView', {
+        displayName: 'Reactome Analysis Results',
+        isAnalysisResults: true,
+        ideogramId: model.ideogramId,
+        pathways,
+      })
       model.setPathways(pathways)
-      // @ts-ignore
-      session.views[xView].setIsAnalysisResults(true)
-      // @ts-ignore
-      session.views[xView].setIdeogramId(model.ideogramId)
     }
 
     if (!res.success) {

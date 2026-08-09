@@ -15,6 +15,17 @@ import {
 import { observer } from 'mobx-react'
 import { makeStyles } from 'tss-react/mui'
 
+/**
+ * The paired ideogram view, named by the two members this file needs from it.
+ * A structural type rather than IdeogramViewModel because session.views is
+ * typed as the abstract view interface, which does not overlap with a concrete
+ * view model, so the honest alternative is the wider `as any` this replaces.
+ */
+interface HighlightTarget {
+  ideoAnnotations?: { name: string; details: { reactomeIds?: string[] } }[]
+  setHighlightedAnnots: (names: string[]) => void
+}
+
 const useStyles = makeStyles()(() => ({
   table: {
     padding: 0,
@@ -29,7 +40,7 @@ const useStyles = makeStyles()(() => ({
   },
 }))
 
-function Pathways(props: any) {
+const Pathways = observer(function Pathways(props: any) {
   const { classes } = useStyles()
   const { model } = props
   // Separate from the const above because it is re-bound to a sorted copy below
@@ -49,16 +60,20 @@ function Pathways(props: any) {
           (view: any) =>
             view?.ideogramId === sessionModel?.ideogramId &&
             view !== sessionModel,
-        )
-        // @ts-ignore
-        targetModel.ideoAnnotations.forEach((annot: any) => {
-          if (annot.details.reactomeIds?.includes(pathway.stId)) {
-            toHighlight.push(annot.name)
-          }
-        })
+        ) as HighlightTarget | undefined
 
-        // @ts-ignore
-        targetModel.setHighlightedAnnots(toHighlight)
+        // The results view is paired with the ideogram view it was launched
+        // from, and the user can close that one on its own. The two ts-ignores
+        // this replaces hid exactly that: with no ideogram left to highlight,
+        // targetModel is undefined and reading ideoAnnotations off it threw.
+        if (targetModel) {
+          for (const annot of targetModel.ideoAnnotations ?? []) {
+            if (annot.details.reactomeIds?.includes(pathway.stId)) {
+              toHighlight.push(annot.name)
+            }
+          }
+          targetModel.setHighlightedAnnots(toHighlight)
+        }
       }
     })
   }
@@ -167,6 +182,6 @@ function Pathways(props: any) {
       />
     </BaseCard>
   )
-}
+})
 
-export default observer(Pathways)
+export default Pathways

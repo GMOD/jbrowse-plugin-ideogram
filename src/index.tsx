@@ -41,10 +41,9 @@ export default class IdeogramPlugin extends Plugin {
         label: 'Ideogram view',
         icon: PauseIcon,
         onClick: (session: SessionWithWidgets) => {
-          session.addView('IdeogramView', {})
-          const xView = session.views.length - 1
-          // @ts-ignore
-          session.views[xView].setDisplayName('Ideogram View')
+          // addView returns the view it made, so there is no need to reach back
+          // into session.views by index and no need for a ts-ignore
+          session.addView('IdeogramView', {}).setDisplayName('Ideogram View')
         },
       })
     }
