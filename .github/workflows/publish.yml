@@ -1,0 +1,66 @@
+# The filename is load-bearing. npm's trusted publisher for
+# jbrowse-plugin-ideogram is configured against `publish.yml` exactly, so
+# renaming or moving this file silently turns publishing back off.
+
+name: Publish
+
+# Tag-triggered, because `npm version <patch|minor|major>` already ends in
+# `postversion: git push --follow-tags`. So cutting a release stays one command
+# and this picks the tag up.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The whole point of trusted publishing: npm trades this short-lived OIDC
+      # token for a publish credential, so no NPM_TOKEN secret lives in this
+      # repo and there is nothing to leak or rotate.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          # Still needed with trusted publishing. It writes the .npmrc that
+          # points npm at the registry. What it does NOT need is the
+          # NODE_AUTH_TOKEN that usually accompanies it.
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing wants npm >= 11.5.1 and Node >= 22.14.0. Node 22
+      # ships npm 10, so the runner's bundled npm is not enough on its own.
+      - name: Install an npm that can do trusted publishing
+        run: npm install -g npm@latest
+
+      # A mistyped tag would publish the wrong version under the right name,
+      # and npm only allows unpublishing for 72 hours.
+      - name: Check the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag=${GITHUB_REF_NAME#v}
+          pkg=$(node -p "require('./package.json').version")
+          if [ "$tag" != "$pkg" ]; then
+            echo "tag $GITHUB_REF_NAME says $tag, package.json says $pkg" >&2
+            exit 1
+          fi
+
+      # --legacy-peer-deps because the MUI v4 tree pins React 16/17 peers that
+      # npm's default resolver refuses to install.
+      - name: Install
+        run: npm install --legacy-peer-deps
+
+      # Runs `prepublishOnly` (the tests) and `prepare` (the build) on the way
+      # out, so a broken build fails here rather than shipping. No --provenance
+      # flag: npm generates the attestation itself once it sees the OIDC token.
+      - name: Publish
+        run: npm publish
