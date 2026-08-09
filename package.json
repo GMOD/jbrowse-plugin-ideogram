@@ -5,7 +5,7 @@
   "description": "JBrowse 2 ideogram plugin",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cmdcolin/jbrowse-plugin-ideogram.git"
+    "url": "https://github.com/GMOD/jbrowse-plugin-ideogram.git"
   },
   "keywords": [
     "jbrowse",
