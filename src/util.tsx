@@ -1,7 +1,16 @@
-import { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
-import { getSession, parseLocString, when } from '@jbrowse/core/util'
-import { IdeogramViewModel } from './model'
+import { getSession, parseLocString } from '@jbrowse/core/util'
+// Straight from mobx, which is what @jbrowse/core/util re-exported anyway. That
+// re-export is gone in JBrowse v5, and because plugins resolve these names off
+// the host's JBrowseExports at runtime, importing it from core made the
+// published bundle read `undefined` on a v5 host. mobx is externalized too, so
+// this costs nothing and works on v4 and v5 alike.
+import { when } from 'mobx'
+
+
 import { generateAnnotations } from './AnnotationsAdapter'
+
+import type { IdeogramViewModel } from './model'
+import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 
 export const regions = [
   'chr1',
@@ -142,7 +151,7 @@ export async function navToAnnotation(
         view.setDisplayedRegions([
           JSON.parse(JSON.stringify(newDisplayedRegion)),
         ])
-        view.navToLocString(locString)
+        await view.navToLocString(locString)
       } catch (e) {
         session.notify(`${e}`, 'error')
       }
@@ -166,11 +175,6 @@ export async function populateAnnotations(model: any) {
     }
 
     if (model.withReactome) {
-      let isActive = false
-      session.views.forEach((view: any) => {
-        if (view?.isAnalysisResults) isActive = true
-      })
-
       const tview = session.views.find(
         (view: any) =>
           view?.isAnalysisResults && view.ideogramId === model.ideogramId,

@@ -1,5 +1,9 @@
-import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon'
 import React from 'react'
+
+import SvgIcon from '@mui/material/SvgIcon'
+
+import type { SvgIconProps } from '@mui/material/SvgIcon'
+
 
 // Icons below come from https://material.io/resources/icons/
 export function AlignHorizontalLeftIcon(props: SvgIconProps) {

@@ -1,13 +1,16 @@
-import PauseIcon from '@material-ui/icons/Pause'
 import Plugin from '@jbrowse/core/Plugin'
-import PluginManager from '@jbrowse/core/PluginManager'
-import { SessionWithWidgets, isAbstractMenuManager } from '@jbrowse/core/util'
 import ViewType from '@jbrowse/core/pluggableElementTypes/ViewType'
 import WidgetType from '@jbrowse/core/pluggableElementTypes/WidgetType'
+import { isAbstractMenuManager } from '@jbrowse/core/util'
+import PauseIcon from '@mui/icons-material/Pause'
+
 import { version } from '../package.json'
-import IdeogramView from './IdeogramView'
 import IdeogramFeatureWidgetF from './IdeogramFeatureWidget'
+import IdeogramView from './IdeogramView'
 import stateModelFactory from './model'
+
+import type PluginManager from '@jbrowse/core/PluginManager'
+import type { SessionWithWidgets} from '@jbrowse/core/util'
 
 export default class IdeogramPlugin extends Plugin {
   name = 'IdeogramPlugin'

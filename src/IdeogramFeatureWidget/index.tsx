@@ -1,8 +1,10 @@
 import { ConfigurationSchema } from '@jbrowse/core/configuration'
-import PluginManager from '@jbrowse/core/PluginManager'
 import { ElementId } from '@jbrowse/core/util/types/mst'
-import { types } from 'mobx-state-tree'
+import { types } from '@jbrowse/mobx-state-tree'
+
 import ReactComponent from './IdeogramFeatureWidget'
+
+import type PluginManager from '@jbrowse/core/PluginManager'
 
 export default (pluginManager: PluginManager) => {
   const configSchema = ConfigurationSchema('IdeogramFeatureWidget', {})

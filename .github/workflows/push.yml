@@ -1,0 +1,28 @@
+name: Push
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-lint:
+    name: Build, lint, and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build first: it runs tsc, so a type error fails here rather than as a
+      # confusing lint parse error downstream.
+      - name: Build
+        run: pnpm build
+      - name: Lint
+        run: pnpm lint
+      - name: Unit tests
+        run: pnpm test

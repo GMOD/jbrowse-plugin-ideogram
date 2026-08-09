@@ -28,19 +28,19 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
-
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24.x
+          cache: pnpm
           # Still needed with trusted publishing. It writes the .npmrc that
-          # points npm at the registry. What it does NOT need is the
+          # points at the registry. What it does NOT need is the
           # NODE_AUTH_TOKEN that usually accompanies it.
           registry-url: https://registry.npmjs.org
 
-      # Trusted publishing wants npm >= 11.5.1 and Node >= 22.14.0. Node 22
-      # ships npm 10, so the runner's bundled npm is not enough on its own.
-      - name: Install an npm that can do trusted publishing
-        run: npm install -g npm@latest
+      - run: pnpm install --frozen-lockfile
 
       # A mistyped tag would publish the wrong version under the right name,
       # and npm only allows unpublishing for 72 hours.
@@ -54,13 +54,17 @@ jobs:
             exit 1
           fi
 
-      # --legacy-peer-deps because the MUI v4 tree pins React 16/17 peers that
-      # npm's default resolver refuses to install.
-      - name: Install
-        run: npm install --legacy-peer-deps
+      - run: pnpm build
 
-      # Runs `prepublishOnly` (the tests) and `prepare` (the build) on the way
-      # out, so a broken build fails here rather than shipping. No --provenance
-      # flag: npm generates the attestation itself once it sees the OIDC token.
+      # npm rather than pnpm for this one step, deliberately. OIDC publishing is
+      # npm's own feature and its client is the reference implementation, while
+      # pnpm's support has been the flaky part (pnpm/pnpm#9812, and #11513 where
+      # OIDC publishing 404'd on pnpm 11.0.8+ after working on 10). pnpm still
+      # does the install and the build above, so the toolchain is unchanged.
+      #
+      # Trusted publishing wants npm >= 11.5.1, and no --provenance flag: npm
+      # generates the attestation itself once it sees the OIDC token.
       - name: Publish
-        run: npm publish
+        run: |
+          npm install -g npm@latest
+          npm publish --access public

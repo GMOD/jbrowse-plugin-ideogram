@@ -1,4 +1,6 @@
 import React from 'react'
+
+import CloseIcon from '@mui/icons-material/Close'
 import {
   Button,
   Dialog,
@@ -7,11 +9,10 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  makeStyles,
-} from '@material-ui/core'
-import CloseIcon from '@material-ui/icons/Close'
+} from '@mui/material'
+import { makeStyles } from 'tss-react/mui'
 
-export const useStyles = makeStyles(theme => ({
+export const useStyles = makeStyles()(theme => ({
   closeButton: {
     position: 'absolute',
     right: theme.spacing(1),
@@ -28,22 +29,20 @@ export default function HelpDialog({
 }: {
   handleClose: () => void
 }) {
-  const classes = useStyles()
+  const { classes } = useStyles()
   return (
     <Dialog open maxWidth="xl" onClose={handleClose}>
       <DialogTitle>
         How to use annotations files
-        {handleClose ? (
-          <IconButton
-            data-testid="close-resultsDialog"
-            className={classes.closeButton}
-            onClick={() => {
-              handleClose()
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        ) : null}
+        <IconButton
+          data-testid="close-resultsDialog"
+          className={classes.closeButton}
+          onClick={() => {
+            handleClose()
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       <Divider />
       <DialogContent>
@@ -122,7 +121,7 @@ export default function HelpDialog({
       </DialogContent>
       <Divider />
       <DialogActions>
-        <Button onClick={() => handleClose()} color="primary">
+        <Button onClick={() => { handleClose() }} color="primary">
           Close
         </Button>
       </DialogActions>

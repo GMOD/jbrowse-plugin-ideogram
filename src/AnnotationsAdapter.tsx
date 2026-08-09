@@ -1,5 +1,6 @@
-import { FileLocation } from '@jbrowse/core/util/types'
 import { openLocation } from '@jbrowse/core/util/io'
+
+import type { FileLocation } from '@jbrowse/core/util/types'
 
 interface response {
   [key: string]: unknown
@@ -171,7 +172,7 @@ function setResponseMessage(error: number) {
  */
 async function widgetfy(obj: any) {
   const newObj = obj
-  newObj['end'] = newObj.stop
+  newObj.end = newObj.stop
   delete newObj.stop
   delete newObj.color
   delete newObj.chr
@@ -188,7 +189,7 @@ async function widgetfy(obj: any) {
 }
 
 async function fetchFile(location: FileLocation) {
-  return (await openLocation(location).readFile('utf8')) as string
+  return (await openLocation(location).readFile('utf8'))
 }
 
 function readAnnot(fileContents: any) {
@@ -228,11 +229,15 @@ function camelize(str: string) {
 }
 
 function parseCoords(property: string) {
-  const splitProperty = property.split(':')
+  // Defaults rather than assertions: a malformed cell used to reach `+undefined`
+  // and come out NaN, which the callers already tolerate. Splitting with
+  // defaults keeps that behavior and drops the undefined from the type.
+  const [chr = '', range = ''] = property.split(':')
+  const [start = '', stop = ''] = range.split('-')
   return {
-    chr: splitProperty[0],
-    start: +splitProperty[1].split('-')[0],
-    stop: +splitProperty[1].split('-')[1],
+    chr,
+    start: +start,
+    stop: +stop,
   }
 }
 
@@ -253,15 +258,19 @@ function parseLine(
   let named = false // prioritize naming a gene based on geneSymbol
   let hasLoc = false
   let hasColor = false
-  line.split('\t').forEach((property: string, i: number) => {
-    if (property) {
-      const camelProp = camelize(columns[i])
+  // A for..of rather than forEach so the three flags above stay honest: set
+  // inside a callback, TypeScript cannot see the assignment and narrows each of
+  // them to `false` at the checks below, which then read as dead code.
+  for (const [i, cell] of line.split('\t').entries()) {
+    if (cell) {
+      let property = cell
+      const camelProp = camelize(columns[i] ?? '')
       if (camelProp === 'name' && !named) {
-        annot['name'] = property
+        annot.name = property
       }
       if (camelProp === 'geneSymbol') {
         named = true
-        annot['name'] = property
+        annot.name = property
       }
       if (camelProp === 'genomeLocation') {
         const parsedProperties = parseCoords(property)
@@ -283,45 +292,43 @@ function parseLine(
         const a = '#0000FF' // blue
         const b = '#FF0000' // red
         if (property === '1') {
-          annot['color'] = a
-          annot['prevColor'] = a
+          annot.color = a
+          annot.prevColor = a
         } else {
-          annot['color'] = b
-          annot['prevColor'] = b
+          annot.color = b
+          annot.prevColor = b
         }
         hasColor = true
       }
-      annot['details'][camelProp] = property
+      annot.details[camelProp] = property
     }
-  })
-
-  if (hasColor === false) {
-    annot['color'] = '#FF0000'
-    annot['prevColor'] = '#FF0000'
   }
-  if (hasLoc === false) {
-    if (dictionary[annot['name']]) {
-      annot['chr'] = dictionary[annot['name']]['chr']
-      annot['start'] = dictionary[annot['name']]['start']
-      annot['stop'] = dictionary[annot['name']]['stop']
-      annot['details']['reactomeIds'] = dictionary[annot['name']]['reactomeIds']
-      annot['details'][
-        'genomeLocation'
-      ] = `${annot['chr']}:${annot['start']}-${annot['stop']}`
+
+  if (!hasColor) {
+    annot.color = '#FF0000'
+    annot.prevColor = '#FF0000'
+  }
+  if (!hasLoc) {
+    if (dictionary[annot.name]) {
+      annot.chr = dictionary[annot.name].chr
+      annot.start = dictionary[annot.name].start
+      annot.stop = dictionary[annot.name].stop
+      annot.details.reactomeIds = dictionary[annot.name].reactomeIds
+      annot.details.genomeLocation = `${annot.chr}:${annot.start}-${annot.stop}`
     } else {
       setResponseMessage(3)
     }
   } else {
-    if (pathways && dictionary && dictionary[annot['name']]) {
-      annot['details']['reactomeIds'] = dictionary[annot['name']]['reactomeIds']
+    if (pathways && dictionary?.[annot.name]) {
+      annot.details.reactomeIds = dictionary[annot.name].reactomeIds
     }
   }
 
-  if (annot['details']['reactomeIds'] && pathways) {
-    annot['details']['pathways'] = []
-    annot['details']['reactomeIds'].forEach((id: any) => {
+  if (annot.details.reactomeIds && pathways) {
+    annot.details.pathways = []
+    annot.details.reactomeIds.forEach((id: any) => {
       if (pathways[id]) {
-        annot['details']['pathways'].push(pathways[id])
+        annot.details.pathways.push(pathways[id])
       }
     })
   }

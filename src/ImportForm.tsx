@@ -1,27 +1,28 @@
 import React, { Suspense, useState } from 'react'
-import { observer } from 'mobx-react'
-import { v4 as uuidv4 } from 'uuid'
-import AssemblySelector from '@jbrowse/core/ui/AssemblySelector'
-import { FileSelector } from '@jbrowse/core/ui'
+
+import { AssemblySelector, FileSelector } from '@jbrowse/core/ui'
 import { getSession } from '@jbrowse/core/util'
+import HelpIcon from '@mui/icons-material/Help'
 import {
   Button,
-  Container,
   Checkbox,
-  Grid,
-  FormControlLabel,
-  TextField,
-  MenuItem,
-  IconButton,
+  Container,
   Divider,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  MenuItem,
+  TextField,
   Typography,
-  makeStyles,
-} from '@material-ui/core'
-import { regions, populateAnnotations } from './util'
-import HelpIcon from '@material-ui/icons/Help'
-import HelpDialog from './HelpDialog'
+} from '@mui/material'
+import { observer } from 'mobx-react'
+import { makeStyles } from 'tss-react/mui'
+import { v4 as uuidv4 } from 'uuid'
 
-const useStyles = makeStyles(theme => ({
+import HelpDialog from './HelpDialog'
+import { populateAnnotations, regions } from './util'
+
+const useStyles = makeStyles()(theme => ({
   importFormContainer: {
     padding: theme.spacing(2),
   },
@@ -46,7 +47,7 @@ const RegionSelector = observer(
     onChange: (arg: string) => void
     selected: string | undefined
   }) => {
-    const classes = useStyles()
+    const { classes } = useStyles()
     const error = regions.length ? '' : 'No configured regions'
     return (
       <TextField
@@ -57,7 +58,7 @@ const RegionSelector = observer(
         helperText={error || 'Select a region to view'}
         value={error ? '' : selected}
         inputProps={{ 'data-testid': 'region-selector' }}
-        onChange={event => onChange(event.target.value)}
+        onChange={event => { onChange(event.target.value) }}
         error={!!error}
         disabled={!!error}
         className={classes.importFormEntry}
@@ -79,10 +80,10 @@ const RegionSelector = observer(
  * the purposes of this component
  */
 const ImportForm = observer(({ model }: { model: any }) => {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const session = getSession(model)
   const { assemblyNames } = session
-  const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0])
+  const [selectedAsm, setSelectedAsm] = useState(assemblyNames[0] ?? '')
   const [selectedRegion, setSelectedRegion] = useState(regions[0])
   const [checked, setChecked] = useState(model.withReactome)
   const [isHelpDialogDisplayed, setHelpDialogDisplayed] = useState(false)
@@ -116,7 +117,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
     <div>
       <Container className={classes.importFormContainer}>
         <Grid container spacing={1} justifyContent="center" alignItems="center">
-          <Grid item>
+          <Grid>
             <AssemblySelector
               onChange={val => {
                 setSelectedAsm(val)
@@ -125,7 +126,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
               selected={selectedAsm}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <RegionSelector
               onChange={val => {
                 setSelectedRegion(val)
@@ -133,14 +134,14 @@ const ImportForm = observer(({ model }: { model: any }) => {
               selected={selectedRegion}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <Button
               type="submit"
               disabled={!selectedRegion}
               className={classes.button}
               onClick={() => {
                 if (selectedRegion) {
-                  handleOpen(selectedAsm, selectedRegion)
+                  void handleOpen(selectedAsm, selectedRegion)
                 }
               }}
               variant="contained"
@@ -152,7 +153,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
               disabled={!selectedRegion}
               className={classes.button}
               onClick={() => {
-                handleOpenAllRegions(selectedAsm)
+                void handleOpenAllRegions(selectedAsm)
               }}
               variant="contained"
               color="secondary"
@@ -174,18 +175,18 @@ const ImportForm = observer(({ model }: { model: any }) => {
           <Typography variant="body2">
             <b>Optional:</b> provide a .tsv file of gene annotations for the
             ideogram.
-            <IconButton onClick={() => setHelpDialogDisplayed(true)}>
+            <IconButton onClick={() => { setHelpDialogDisplayed(true) }}>
               <HelpIcon />
             </IconButton>
           </Typography>
-          <Grid item>
+          <Grid>
             <FileSelector
               name="Annotations file"
               location={model.annotationsLocation}
               setLocation={loc => model.setAnnotationsLocation(loc)}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <FormControlLabel
               label="Analyze annotations with Reactome"
               control={
@@ -201,7 +202,7 @@ const ImportForm = observer(({ model }: { model: any }) => {
       </Container>
       {isHelpDialogDisplayed ? (
         <Suspense fallback={<div />}>
-          <HelpDialog handleClose={() => setHelpDialogDisplayed(false)} />
+          <HelpDialog handleClose={() => { setHelpDialogDisplayed(false) }} />
         </Suspense>
       ) : null}
     </div>

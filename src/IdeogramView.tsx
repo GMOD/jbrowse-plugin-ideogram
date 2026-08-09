@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useMemo } from 'react'
-import { observer } from 'mobx-react'
-import Ideogram from 'ideogram'
-import ImportForm from './ImportForm'
-import { allChromosomes, tierLegend, populateAnnotations } from './util'
-import { Grid, Typography, Link } from '@material-ui/core'
+import React, { useEffect, useMemo, useRef } from 'react'
+
 import { getSession } from '@jbrowse/core/util'
+import { Grid, Link, Typography } from '@mui/material'
+import Ideogram from 'ideogram'
+import { observer } from 'mobx-react'
 import PulseLoader from 'react-spinners/PulseLoader'
+
+import ImportForm from './ImportForm'
 import Pathways from './Pathways'
+import { allChromosomes, populateAnnotations, tierLegend } from './util'
 
 let iter = 0
 const IdeogramView = observer(({ model }: { model: any }) => {
@@ -33,29 +35,27 @@ const IdeogramView = observer(({ model }: { model: any }) => {
 
   function onClickAnnot(annot: any) {
     const session = getSession(model)
-    const target = model.widgetAnnotations.filter(function(data: any) {
-      return data.name === annot.name
-    })[0]
+    const target = model.widgetAnnotations.find(
+      (data: any) => data.name === annot.name,
+    )
 
     model.setSelectedAnnot(annot.name)
 
-    if (session) {
-      // @ts-ignore
-      const widget = session.addWidget(
-        'IdeogramFeatureWidget',
-        'ideogramFeature',
-        {
-          featureData: target,
-          view: model,
-        },
-      )
-      // @ts-ignore
-      session.showWidget(widget)
-      session.setSelection(target)
-    }
+    // @ts-ignore
+    const widget = session.addWidget(
+      'IdeogramFeatureWidget',
+      'ideogramFeature',
+      {
+        featureData: target,
+        view: model,
+      },
+    )
+    // @ts-ignore
+    session.showWidget(widget)
+    session.setSelection(target)
   }
 
-  var config = {
+  const config = {
     organism: 'human',
     sex: model.sex,
     chrHeight,
@@ -74,6 +74,10 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     if (ref.current) {
       return new Ideogram(config)
     }
+    // `config` is rebuilt on every render, so depending on it would redraw the
+    // ideogram every render forever. The list below is the set of model fields
+    // config is actually derived from, which is the real trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     model.sex,
     model.orientation,
@@ -96,6 +100,9 @@ const IdeogramView = observer(({ model }: { model: any }) => {
     if (!model.ideoAnnotations && !model.showImportForm) {
       annotate().catch(console.error)
     }
+    // `model` is a stable MST node, so listing it would add nothing. Refetching
+    // is keyed on the two fields the annotations are actually derived from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model.annotationsLocation, model.withReactome])
 
   return (

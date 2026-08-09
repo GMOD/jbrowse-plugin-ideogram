@@ -1,15 +1,18 @@
-import { types, Instance } from 'mobx-state-tree'
-import VisibilityIcon from '@material-ui/icons/Visibility'
-import { ElementId } from '@jbrowse/core/util/types/mst'
-import { MenuItem } from '@jbrowse/core/ui'
-import PluginManager from '@jbrowse/core/PluginManager'
-import { AlignHorizontalLeftIcon, HourglassIcon, MaleIcon } from './Icons'
-import FolderOpenIcon from '@material-ui/icons/FolderOpen'
-import { FileLocation } from '@jbrowse/core/util/types'
-import TableChartIcon from '@material-ui/icons/TableChart'
 import { getSession } from '@jbrowse/core/util'
+import { ElementId } from '@jbrowse/core/util/types/mst'
+import { types } from '@jbrowse/mobx-state-tree'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import TableChartIcon from '@mui/icons-material/TableChart'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
-export default function IdeogramView(pluginManager: PluginManager) {
+import { AlignHorizontalLeftIcon, HourglassIcon, MaleIcon } from './Icons'
+
+import type PluginManager from '@jbrowse/core/PluginManager'
+import type { MenuItem } from '@jbrowse/core/ui'
+import type { FileLocation } from '@jbrowse/core/util/types'
+import type { Instance } from '@jbrowse/mobx-state-tree'
+
+export default function IdeogramView(_pluginManager: PluginManager) {
   return types
     .model('IdeogramView', {
       type: types.literal('IdeogramView'),
@@ -37,21 +40,25 @@ export default function IdeogramView(pluginManager: PluginManager) {
         locationType: 'UriLocation',
       }),
     })
+    // These start out undefined and the code below already checks for that, so
+    // say so in the type. The `undefined as unknown as object` double-cast that
+    // used to be here asserted the opposite, which made every one of those
+    // checks look impossible to the compiler while doing nothing at runtime.
     .volatile(() => ({
-      widgetAnnotations: (undefined as unknown) as object,
-      ideoAnnotations: (undefined as unknown) as object,
-      pathways: (undefined as unknown) as object,
-      highlightedAnnots: (undefined as unknown) as Array<object>,
+      widgetAnnotations: undefined as object | undefined,
+      ideoAnnotations: undefined as object | undefined,
+      pathways: undefined as object | undefined,
+      highlightedAnnots: undefined as object[] | undefined,
     }))
     .actions(self => ({
-      setWidth(n: number) {
+      setWidth(_n: number) {
         /* do nothing */
       },
       setDisplayName(str: string) {
         self.displayName = str
       },
       setRegion(chr: string) {
-        self.region = chr.split('chr')[1]
+        self.region = chr.split('chr')[1] ?? chr
       },
       setAssembly(asm: string) {
         self.assembly = asm
@@ -120,7 +127,7 @@ export default function IdeogramView(pluginManager: PluginManager) {
         })
       },
       toggleAllRegions(toggle: boolean) {
-        if (toggle === false) {
+        if (!toggle) {
           this.setOrientation('horizontal')
         }
         this.setAllRegions(toggle)
@@ -144,10 +151,9 @@ export default function IdeogramView(pluginManager: PluginManager) {
       },
       refreshTable() {
         const session = getSession(self)
-        let isActive = false
-        session.views.forEach((view: any) => {
-          if (view?.isAnalysisResults) isActive = true
-        })
+        const isActive = session.views.some(
+          (view: any) => view?.isAnalysisResults,
+        )
         if (!isActive) {
           session.addView('IdeogramView', {})
           const xView = session.views.length - 1
@@ -173,27 +179,27 @@ export default function IdeogramView(pluginManager: PluginManager) {
           {
             label: 'Return to import form',
             icon: FolderOpenIcon,
-            disabled: self.isAnalysisResults === true,
-            onClick: () => self.setShowImportForm(true),
+            disabled: self.isAnalysisResults,
+            onClick: () => { self.setShowImportForm(true) },
           },
           {
             label: 'Show all regions in assembly',
             icon: VisibilityIcon,
             type: 'checkbox',
-            checked: self.allRegions === true,
+            checked: self.allRegions,
             disabled:
-              self.isAnalysisResults === true || self.showImportForm === true,
-            onClick: () => self.toggleAllRegions(!self.allRegions),
+              self.isAnalysisResults || self.showImportForm,
+            onClick: () => { self.toggleAllRegions(!self.allRegions) },
           },
           {
             label: 'Horizontal Display',
             icon: AlignHorizontalLeftIcon,
             type: 'checkbox',
             disabled:
-              (self.allRegions === false && self.isAnalysisResults === true) ||
-              self.showImportForm === true,
+              (!self.allRegions && self.isAnalysisResults) ||
+              self.showImportForm,
             checked: self.orientation === 'horizontal',
-            onClick: () => self.toggleOrientation(),
+            onClick: () => { self.toggleOrientation() },
           },
           {
             label: 'Male Genome',
@@ -201,31 +207,31 @@ export default function IdeogramView(pluginManager: PluginManager) {
             type: 'checkbox',
             checked: self.sex === 'male',
             disabled:
-              self.isAnalysisResults === true || self.showImportForm === true,
-            onClick: () => self.toggleSex(),
+              self.isAnalysisResults || self.showImportForm,
+            onClick: () => { self.toggleSex() },
           },
           {
             label: 'Show annotations',
             icon: HourglassIcon,
             type: 'checkbox',
             checked:
-              self.showAnnotations === true &&
+              self.showAnnotations &&
               self.ideoAnnotations !== undefined,
             disabled:
               (self.widgetAnnotations === undefined &&
-                self.isAnalysisResults === true) ||
-              self.showImportForm === true ||
+                self.isAnalysisResults) ||
+              self.showImportForm ||
               self.ideoAnnotations === undefined,
-            onClick: () => self.toggleAnnotations(),
+            onClick: () => { self.toggleAnnotations() },
           },
           {
             label: 'Refresh Analysis Results Table',
             icon: TableChartIcon,
             disabled:
-              self.isAnalysisResults === true ||
-              self.showImportForm === true ||
-              self.withReactome === false,
-            onClick: () => self.refreshTable(),
+              self.isAnalysisResults ||
+              self.showImportForm ||
+              !self.withReactome,
+            onClick: () => { self.refreshTable() },
           },
         ]
         return menuItems

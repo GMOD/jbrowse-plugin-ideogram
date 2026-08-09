@@ -1,20 +1,21 @@
 import React, { useState } from 'react'
-import { observer } from 'mobx-react'
+
+import { BaseCard } from '@jbrowse/core/BaseFeatureWidget/BaseFeatureDetail'
+import { getSession } from '@jbrowse/core/util'
 import {
+  Link,
   Table,
-  TableHead,
   TableBody,
   TableCell,
   TableContainer,
+  TableHead,
   TablePagination,
   TableRow,
-  Link,
-  makeStyles,
-} from '@material-ui/core'
-import { getSession } from '@jbrowse/core/util'
-import { BaseCard } from '@jbrowse/core/BaseFeatureWidget/BaseFeatureDetail'
+} from '@mui/material'
+import { observer } from 'mobx-react'
+import { makeStyles } from 'tss-react/mui'
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   table: {
     padding: 0,
   },
@@ -29,25 +30,26 @@ const useStyles = makeStyles(() => ({
 }))
 
 function Pathways(props: any) {
-  const classes = useStyles()
-  let { model, pathways } = props
+  const { classes } = useStyles()
+  const { model } = props
+  // Separate from the const above because it is re-bound to a sorted copy below
+  let { pathways } = props
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
   const [selected, setSelected] = useState({ name: '' })
 
-  const handleClick = (event: any, pathway: any) => {
+  const handleClick = (_event: any, pathway: any) => {
     setSelected(pathway)
     const toHighlight: any = []
 
     const session = getSession(model)
-    session.views.forEach((sessionModel: any, i: number) => {
+    session.views.forEach((sessionModel: any) => {
       if (sessionModel === model) {
-        const targetModel = session.views.filter((view: any) => {
-          return (
+        const targetModel = session.views.find(
+          (view: any) =>
             view?.ideogramId === sessionModel?.ideogramId &&
-            view !== sessionModel
-          )
-        })[0]
+            view !== sessionModel,
+        )
         // @ts-ignore
         targetModel.ideoAnnotations.forEach((annot: any) => {
           if (annot.details.reactomeIds?.includes(pathway.stId)) {
@@ -61,7 +63,7 @@ function Pathways(props: any) {
     })
   }
 
-  const handleChangePage = (event: any, newPage: any) => {
+  const handleChangePage = (_event: any, newPage: any) => {
     setPage(newPage)
   }
 
@@ -111,7 +113,7 @@ function Pathways(props: any) {
                 return (
                   <TableRow
                     key={key}
-                    onClick={(event: any) => handleClick(event, pathway)}
+                    onClick={(event: any) => { handleClick(event, pathway) }}
                     selected={isItemSelected}
                   >
                     <TableCell>

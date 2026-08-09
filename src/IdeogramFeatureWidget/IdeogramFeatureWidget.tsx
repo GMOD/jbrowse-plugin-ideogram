@@ -1,29 +1,33 @@
 import React from 'react'
-import { observer } from 'mobx-react'
+
 import {
-  FeatureDetails,
   BaseCard,
+  FeatureDetails,
 } from '@jbrowse/core/BaseFeatureWidget/BaseFeatureDetail'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import MenuOpenIcon from '@mui/icons-material/MenuOpen'
 import {
+  Button,
+  Chip,
+  IconButton,
+  Link,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableRow,
-  Link,
-  Chip,
-  Button,
-  IconButton,
   Tooltip,
-  makeStyles,
-} from '@material-ui/core'
-import { navToAnnotation, openReactomeView } from '../util'
-import { TreeView, TreeItem } from '@material-ui/lab'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import ChevronRightIcon from '@material-ui/icons/ChevronRight'
-import MenuOpenIcon from '@material-ui/icons/MenuOpen'
+} from '@mui/material'
+import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
+import { TreeItem } from '@mui/x-tree-view/TreeItem'
+import { observer } from 'mobx-react'
+import { makeStyles } from 'tss-react/mui'
 
-const useStyles = makeStyles(() => ({
+import { navToAnnotation, openReactomeView } from '../util'
+
+
+const useStyles = makeStyles()(() => ({
   table: {
     padding: 0,
   },
@@ -41,7 +45,7 @@ const useStyles = makeStyles(() => ({
  * Render a single table row for an external link
  */
 const ExternalLink = observer((props: any) => {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const { id, name, link } = props
   return (
     <>
@@ -64,7 +68,7 @@ const ExternalLink = observer((props: any) => {
 })
 
 function ExternalLinks(props: any) {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const { feature } = props
 
   const externalLinkArray = feature.externalLinks
@@ -74,13 +78,15 @@ function ExternalLinks(props: any) {
       <div className={classes.tableContainer}>
         <Table className={classes.table}>
           <TableBody>
-            {externalLinkArray.map((externalLink: string, key: string) => (
-              <ExternalLink
-                id={feature.geneSymbol ? feature.geneSymbol : feature.name}
-                {...externalLink}
-                key={key}
-              />
-            ))}
+            {externalLinkArray.map(
+              (externalLink: { name: string; link: string }, key: number) => (
+                <ExternalLink
+                  id={feature.geneSymbol ? feature.geneSymbol : feature.name}
+                  {...externalLink}
+                  key={key}
+                />
+              ),
+            )}
           </TableBody>
         </Table>
       </div>
@@ -89,7 +95,7 @@ function ExternalLinks(props: any) {
 }
 
 function Synonyms(props: any) {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const { feature } = props
 
   const synonyms = feature.synonyms.split(',')
@@ -128,7 +134,7 @@ function NavLink(props: any) {
           color="primary"
           size="large"
           onClick={() => {
-            navToAnnotation(`${feature.genomeLocation}`, model)
+            void navToAnnotation(`${feature.genomeLocation}`, model)
           }}
         >
           Navigate
@@ -140,7 +146,7 @@ function NavLink(props: any) {
 
 function ReactomeItem(props: any) {
   const { node, model, pathways, geneName } = props
-  const classes = useStyles()
+  const { classes } = useStyles()
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -159,7 +165,13 @@ function ReactomeItem(props: any) {
             color="primary"
             component="span"
             onClick={() => {
-              openReactomeView(node.stId, pathways, node.name, geneName, model)
+              void openReactomeView(
+                node.stId,
+                pathways,
+                node.name,
+                geneName,
+                model,
+              )
             }}
           >
             <MenuOpenIcon />
@@ -176,7 +188,7 @@ function Hierarchy(props: any) {
   const renderTree = (nodes: any) => (
     <TreeItem
       key={nodes.stId}
-      nodeId={nodes.stId}
+      itemId={nodes.stId}
       label={
         <ReactomeItem
           node={nodes}
@@ -194,12 +206,11 @@ function Hierarchy(props: any) {
 
   return (
     <BaseCard title="Reactome Annotated Pathways">
-      <TreeView
-        defaultCollapseIcon={<ExpandMoreIcon />}
-        defaultExpandIcon={<ChevronRightIcon />}
+      <SimpleTreeView
+        slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
       >
         {hierarchy.map((node: any) => renderTree(node))}
-      </TreeView>
+      </SimpleTreeView>
     </BaseCard>
   )
 }
